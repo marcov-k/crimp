@@ -67,6 +67,8 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+[Tt]est/*.exe
+
 # Build results on 'Bin' directories
 **/[Bb]in/*
 # Uncomment if you have tasks that rely on *.refresh files to move binaries
@@ -443,3 +445,4 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+/src/test/add.exe
