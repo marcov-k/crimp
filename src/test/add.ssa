@@ -1,0 +1,16 @@
+data $fmt = { b "%d\n", b 0 }
+
+function w $add(w %a, w %b)
+{
+@start
+	%r =w add %a, %b
+	ret %r
+}
+
+export function w $main()
+{
+@start
+	%r =w call $add(w 2, w 3)
+	%n =w call $printf(l $fmt, ..., w %r)
+	ret 0
+}

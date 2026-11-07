@@ -12,7 +12,7 @@ endif()
 project ("crimp")
 
 # Add source to this project's executable.
-add_executable (crimp "src/main.cpp"  "src/platform/utf8_wide.h" "src/platform/utf8_wide.cpp" "src/platform/win_error.h" "src/platform/win_error.cpp" "src/platform/scoped_handle.h" "src/platform/scoped_handle.cpp" "src/platform/process.h" "src/platform/process.cpp" "src/platform/file_io.h" "src/platform/file_io.cpp" "src/driver/driver.h" "src/driver/driver.cpp")
+add_executable (crimp "src/main.cpp"  "src/platform/utf8_wide.h" "src/platform/utf8_wide.cpp" "src/platform/win_error.h" "src/platform/win_error.cpp" "src/platform/scoped_handle.h" "src/platform/scoped_handle.cpp" "src/platform/process.h" "src/platform/process.cpp" "src/platform/file_io.h" "src/platform/file_io.cpp" "src/driver/driver.h" "src/driver/driver.cpp" "src/lexer/lexer.h" "src/lexer/lexer.cpp" "src/compile_flags.h" "src/platform/startup.h" "src/platform/startup.cpp" "src/diagnostics/source_map.h" "src/diagnostics/source_map.cpp" "src/diagnostics/diagnostics.h" "src/diagnostics/diagnostics.cpp" "src/utils/utils.h" "src/utils/utils.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET crimp PROPERTY CXX_STANDARD 20)

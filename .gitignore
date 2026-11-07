@@ -67,7 +67,7 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
-[Tt]est/*.exe
+*.exe
 
 # Build results on 'Bin' directories
 **/[Bb]in/*
@@ -442,7 +442,3 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-
-# Official VS Code C# Dev Kit Extension exclusion
-#*.lscache
-/src/test/add.exe
