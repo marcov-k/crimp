@@ -1,18 +1,11 @@
 #pragma once
 
+#include "../common/span.h"
+
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
-
-using FileId = size_t;
-
-struct Span
-{
-	FileId file{ 0 };
-	size_t begin{ 0 };
-	size_t end{ 0 };
-};
 
 struct LineCol
 {

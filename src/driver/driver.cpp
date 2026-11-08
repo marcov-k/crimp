@@ -1,5 +1,7 @@
 #include "driver.h"
 
+#include "../common/span.h"
+#include "../common/utils.h"
 #include "../compile_flags.h"
 #include "../diagnostics/diagnostics.h"
 #include "../diagnostics/source_map.h"
@@ -8,16 +10,77 @@
 #include "../platform/process.h"
 #include "../platform/startup.h"
 #include "../platform/utf8_wide.h"
-#include "../utils/utils.h"
 
 #include <cstdio>
 #include <cwchar>
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace
 {
+	std::string EscapeLexeme(std::string_view s)
+	{
+		static constexpr char hex[] = "0123456789abcdef";
+
+		std::string out;
+		out.reserve(s.size());
+
+		for (char ch : s)
+		{
+			unsigned char b{ static_cast<unsigned char>(ch) };
+
+			switch (b)
+			{
+			case '\n':
+				out += "\\n";
+				break;
+			case '\r':
+				out += "\\r";
+				break;
+			case '\t':
+				out += "\\t";
+				break;
+			case '\\':
+				out += "\\\\";
+				break;
+			case '"':
+				out += "\\\"";
+				break;
+			default:
+				if (b < 0x20 || b >= 0x7F)
+				{
+					out += "\\x";
+					out += hex[b >> 4];
+					out += hex[b & 0x0F];
+				}
+				else
+				{
+					out += ch;
+				}
+				break;
+			}
+		}
+
+		return out;
+	}
+
+	void DumpTokens(const SourceMap& source, FileId fileId, const std::vector<Token>& tokens)
+	{
+		const SourceFile& file{ source.File(fileId) };
+		std::string_view text{ file.text };
+
+		for (const Token& token : tokens)
+		{
+			LineCol lc{ source.Locate(fileId, token.span.begin) };
+			std::string_view lexeme{ text.substr(token.span.begin, token.span.end - token.span.begin) };
+			std::cout << lc.line << ":" << lc.col << " " << GetTokenName(token.type) << " \"" << EscapeLexeme(lexeme) << "\"\n";
+		}
+		std::cout << std::endl;
+	}
+
 	std::string ReadLog(const std::filesystem::path& p)
 	{
 		std::string text, ignored;
@@ -104,12 +167,20 @@ namespace
 		SourceMap sources;
 		FileId id{ sources.Add(PathToUTF8(sourcePath), std::move(text)) };
 
+		std::vector<Token> tokens{ Lex(sources, id, diags) };
+		if (flags.dumpTokens)
+		{
+			DumpTokens(sources, id, tokens);
+		}
+
 		for (const Diagnostic& d : diags.All())
 		{
 			std::string s{ Render(sources, d) };
-			std::fwrite(s.data(), 0, 0, stderr);
+			std::fwrite(s.data(), 1, s.size(), stderr);
 		}
 		if (diags.HasErrors()) return 1;
+
+		if (flags.dumpTokens) return 0;
 
 		Tools tools;
 		tools.qbe = ResolveTool(L"CRIMP_QBE", L"qbe");
@@ -165,6 +236,7 @@ int wmain(int argc, wchar_t** argv)
 	{
 		if (wcscmp(argv[i], L"--verbose") == 0) flags.verbose = true;
 		else if (wcscmp(argv[i], L"--keep-temps") == 0) flags.keepTemps = true;
+		else if (wcscmp(argv[i], L"--dump-tokens") == 0) flags.dumpTokens = true;
 		else { std::fprintf(stderr, "unknown option '%s'\n", WideToUTF8({ argv[i] }).c_str()); return 1; }
 	}
 

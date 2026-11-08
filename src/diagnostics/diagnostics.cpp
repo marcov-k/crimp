@@ -1,6 +1,7 @@
 #include "diagnostics.h"
 
 #include "source_map.h"
+#include "../common/span.h"
 
 #include <string>
 #include <vector>

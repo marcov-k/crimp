@@ -1,5 +1,7 @@
 #include "source_map.h"
 
+#include "../common/span.h"
+
 #include <cstdint>
 #include <string>
 #include <string_view>
