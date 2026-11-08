@@ -3,6 +3,7 @@
 #include "source_map.h"
 #include "../common/span.h"
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -11,7 +12,7 @@ namespace
 	std::string ExpandTabs(std::string_view s)
 	{
 		std::string out;
-		size_t col{ 0 };
+		std::size_t col{ 0 };
 		for (unsigned char c : s)
 		{
 			if (c == '\t')
@@ -32,10 +33,10 @@ namespace
 		return out;
 	}
 
-	size_t DisplayCol(std::string_view line, size_t byteOff)
+	std::size_t DisplayCol(std::string_view line, std::size_t byteOff)
 	{
-		size_t col{ 0 };
-		for (size_t i{ 0 }; i < byteOff && i < line.size(); ++i)
+		std::size_t col{ 0 };
+		for (std::size_t i{ 0 }; i < byteOff && i < line.size(); ++i)
 		{
 			unsigned char c{ static_cast<unsigned char>(line[i]) };
 			if (c == '\t')
@@ -69,14 +70,14 @@ namespace
 		std::string out{ f.path + ":" + std::to_string(lc.line) + ":" + std::to_string(lc.col) + ": " + lbl + ": " + msg + "\n" };
 
 		std::string_view line{ sm.LineText(span.file, lc.line) };
-		size_t lineBegin{ f.lineStarts[lc.line - 1] };
-		size_t b{ span.begin - lineBegin };
-		size_t e{ span.end > span.begin ? span.end - lineBegin : b + 1 };
+		std::size_t lineBegin{ f.lineStarts[lc.line - 1] };
+		std::size_t b{ span.begin - lineBegin };
+		std::size_t e{ span.end > span.begin ? span.end - lineBegin : b + 1 };
 		if (e > line.size()) e = line.size();
 
-		size_t start{ DisplayCol(line, b) };
-		size_t stop{ DisplayCol(line, e) };
-		size_t width{ stop > start ? stop - start : 1 };
+		std::size_t start{ DisplayCol(line, b) };
+		std::size_t stop{ DisplayCol(line, e) };
+		std::size_t width{ stop > start ? stop - start : 1 };
 
 		std::string num{ std::to_string(lc.line) };
 		std::string pad(num.size(), ' ');
@@ -87,7 +88,7 @@ namespace
 	}
 }
 
-Diagnostics::Diagnostics(size_t maxErrors) : _maxErrors(maxErrors) {}
+Diagnostics::Diagnostics(std::size_t maxErrors) : _maxErrors(maxErrors) {}
 
 void Diagnostics::Emit(Diagnostic d)
 {

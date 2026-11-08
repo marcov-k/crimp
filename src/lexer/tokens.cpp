@@ -1,5 +1,6 @@
 #include "tokens.h"
 
+#include <cstddef>
 #include <string_view>
 
 namespace
@@ -47,7 +48,7 @@ namespace
 
 		"", // DelimiterEnd
 	};
-	static_assert(std::size(spellings) == static_cast<size_t>(TokenType::DelimiterEnd) + 1);
+	static_assert(std::size(spellings) == static_cast<std::size_t>(TokenType::DelimiterEnd) + 1);
 
 	constexpr std::string_view tokenNames[] =
 	{
@@ -92,17 +93,17 @@ namespace
 
 		"DelimiterEnd",
 	};
-	static_assert(std::size(tokenNames) == static_cast<size_t>(TokenType::DelimiterEnd) + 1);
+	static_assert(std::size(tokenNames) == static_cast<std::size_t>(TokenType::DelimiterEnd) + 1);
 }
 
 std::string_view GetSpelling(TokenType token)
 {
-	return spellings[static_cast<size_t>(token)];
+	return spellings[static_cast<std::size_t>(token)];
 }
 
 TokenType GetKeywordType(std::string_view spelling)
 {
-	for (size_t i{ static_cast<size_t>(TokenType::KeywordStart) + 1 }; i < static_cast<size_t>(TokenType::KeywordEnd); ++i)
+	for (std::size_t i{ static_cast<std::size_t>(TokenType::KeywordStart) + 1 }; i < static_cast<std::size_t>(TokenType::KeywordEnd); ++i)
 	{
 		if (spelling == spellings[i])
 		{
@@ -115,5 +116,5 @@ TokenType GetKeywordType(std::string_view spelling)
 
 std::string_view GetTokenName(TokenType type)
 {
-	return tokenNames[static_cast<size_t>(type)];
+	return tokenNames[static_cast<std::size_t>(type)];
 }

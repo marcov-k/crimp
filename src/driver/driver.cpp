@@ -1,5 +1,7 @@
 #include "driver.h"
 
+#include "../ast/ast_dump.h"
+#include "../ast/ast_dump_tests.h"
 #include "../common/span.h"
 #include "../common/utils.h"
 #include "../compile_flags.h"
@@ -21,52 +23,6 @@
 
 namespace
 {
-	std::string EscapeLexeme(std::string_view s)
-	{
-		static constexpr char hex[] = "0123456789abcdef";
-
-		std::string out;
-		out.reserve(s.size());
-
-		for (char ch : s)
-		{
-			unsigned char b{ static_cast<unsigned char>(ch) };
-
-			switch (b)
-			{
-			case '\n':
-				out += "\\n";
-				break;
-			case '\r':
-				out += "\\r";
-				break;
-			case '\t':
-				out += "\\t";
-				break;
-			case '\\':
-				out += "\\\\";
-				break;
-			case '"':
-				out += "\\\"";
-				break;
-			default:
-				if (b < 0x20 || b >= 0x7F)
-				{
-					out += "\\x";
-					out += hex[b >> 4];
-					out += hex[b & 0x0F];
-				}
-				else
-				{
-					out += ch;
-				}
-				break;
-			}
-		}
-
-		return out;
-	}
-
 	void DumpTokens(const SourceMap& source, FileId fileId, const std::vector<Token>& tokens)
 	{
 		const SourceFile& file{ source.File(fileId) };
@@ -76,9 +32,8 @@ namespace
 		{
 			LineCol lc{ source.Locate(fileId, token.span.begin) };
 			std::string_view lexeme{ text.substr(token.span.begin, token.span.end - token.span.begin) };
-			std::cout << lc.line << ":" << lc.col << " " << GetTokenName(token.type) << " \"" << EscapeLexeme(lexeme) << "\"\n";
+			std::printf("%zu:%zu %s \"%s\"\n", lc.line, lc.col, GetTokenName(token.type).data(), EscapeString(lexeme).c_str());
 		}
-		std::cout << std::endl;
 	}
 
 	std::string ReadLog(const std::filesystem::path& p)
@@ -191,7 +146,7 @@ namespace
 		}
 		if (flags.verbose)
 		{
-			std::cout << "using QBE found at: " << PathToUTF8(tools.qbe) << std::endl;
+			std::printf("using QBE found at: %s\n", PathToUTF8(tools.qbe).c_str());
 		}
 
 		tools.cc = ResolveTool(L"CRIMP_CC", L"gcc");
@@ -202,7 +157,7 @@ namespace
 		}
 		if (flags.verbose)
 		{
-			std::cout << "using GCC found at: " << PathToUTF8(tools.cc) << std::endl;
+			std::printf("using GCC found at: %s\n", PathToUTF8(tools.cc).c_str());
 		}
 
 		std::filesystem::path exePath{ GetExecutablePath(sourcePath) };
@@ -223,6 +178,8 @@ int wmain(int argc, wchar_t** argv)
 {
 	Initialize();
 
+	if (argc == 2 && wcscmp(argv[1], L"--test-ast") == 0) return RunAstDumpTests();
+
 	if (argc < 2)
 	{
 		std::fprintf(stderr, "missing source file\n");
@@ -237,6 +194,7 @@ int wmain(int argc, wchar_t** argv)
 		if (wcscmp(argv[i], L"--verbose") == 0) flags.verbose = true;
 		else if (wcscmp(argv[i], L"--keep-temps") == 0) flags.keepTemps = true;
 		else if (wcscmp(argv[i], L"--dump-tokens") == 0) flags.dumpTokens = true;
+		else if (wcscmp(argv[i], L"--dump-ast") == 0) flags.dumpAst = true;
 		else { std::fprintf(stderr, "unknown option '%s'\n", WideToUTF8({ argv[i] }).c_str()); return 1; }
 	}
 

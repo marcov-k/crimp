@@ -6,6 +6,7 @@
 #include "../diagnostics/diagnostics.h"
 #include "../diagnostics/source_map.h"
 
+#include <cstddef>
 #include <string_view>
 #include <vector>
 
@@ -15,10 +16,10 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 	std::string_view text{ file.text };
 	std::vector<Token> tokens{};
 
-	size_t textSize{ file.text.size() };
+	std::size_t textSize{ file.text.size() };
 	tokens.reserve(textSize / 4 + 1);
 
-	size_t pos{ 0 };
+	std::size_t pos{ 0 };
 	while (pos < textSize)
 	{
 		char c{ text[pos] };
@@ -42,7 +43,7 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 
 		if (IsAlpha(c) || c == '_')
 		{
-			size_t start{ pos };
+			std::size_t start{ pos };
 
 			while (pos < textSize && (IsAlphanumeric(text[pos]) || text[pos] == '_')) ++pos;
 
@@ -56,7 +57,7 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 
 		if (IsDigit(c))
 		{
-			size_t start{ pos };
+			std::size_t start{ pos };
 
 			while (pos < textSize && IsDigit(text[pos])) ++pos;
 
@@ -79,7 +80,7 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 
 		if (c == '"')
 		{
-			size_t start{ pos };
+			std::size_t start{ pos };
 
 			++pos;
 			while (pos < textSize && text[pos] != '"' && text[pos] != '\n')

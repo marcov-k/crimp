@@ -4,6 +4,7 @@
 
 #include "../common/span.h"
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,7 @@ struct Diagnostic
 class Diagnostics
 {
 public:
-	explicit Diagnostics(size_t maxErrors = 20);
+	explicit Diagnostics(std::size_t maxErrors = 20);
 
 	void Emit(Diagnostic d);
 	
@@ -47,8 +48,8 @@ public:
 
 private:
 	std::vector<Diagnostic> _list;
-	size_t _errors{ 0 };
-	size_t _maxErrors;
+	std::size_t _errors{ 0 };
+	std::size_t _maxErrors;
 };
 
 std::string Render(const SourceMap& sm, const Diagnostic& d);

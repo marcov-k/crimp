@@ -2,6 +2,7 @@
 
 #include "../common/span.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -9,15 +10,15 @@
 
 struct LineCol
 {
-	size_t line;
-	size_t col;
+	std::size_t line;
+	std::size_t col;
 };
 
 struct SourceFile
 {
 	std::string path;
 	std::string text;
-	std::vector<size_t> lineStarts;
+	std::vector<std::size_t> lineStarts;
 };
 
 class SourceMap
@@ -27,9 +28,9 @@ public:
 
 	const SourceFile& File(FileId id) const;
 
-	LineCol Locate(FileId id, size_t offset) const;
+	LineCol Locate(FileId id, std::size_t offset) const;
 
-	std::string_view LineText(FileId id, size_t line) const;
+	std::string_view LineText(FileId id, std::size_t line) const;
 
 private:
 	std::vector<SourceFile> _files;

@@ -4,6 +4,7 @@
 
 #include <windows.h>
 
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -52,7 +53,7 @@ bool ReadFile(const std::filesystem::path& p, std::string& out, std::string& err
 	}
 	f.seekg(0);
 
-	out.resize(static_cast<size_t>(size));
+	out.resize(static_cast<std::size_t>(size));
 	if (size > 0 && !f.read(out.data(), size))
 	{
 		error = "read failed: " + PathToUTF8(p);

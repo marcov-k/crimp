@@ -2,6 +2,7 @@
 
 #include "../common/span.h"
 
+#include <cstddef>
 #include <string_view>
 
 enum class TokenType : uint8_t
@@ -83,5 +84,5 @@ struct Token
 {
 	TokenType type{ TokenType::Eof };
 	Span span{};
-	size_t id{};
+	std::size_t id{};
 };

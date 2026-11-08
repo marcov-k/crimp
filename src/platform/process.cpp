@@ -6,6 +6,7 @@
 
 #include <windows.h>
 
+#include <cstddef>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -78,7 +79,7 @@ std::wstring QuoteArg(const std::wstring& a)
 
 	std::wstring out{ L"\"" };
 
-	size_t backslashes{ 0 };
+	std::size_t backslashes{ 0 };
 	for (wchar_t c : a)
 	{
 		if (c == L'\\')

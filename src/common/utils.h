@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <string_view>
 
 bool IsNullOrWhitespace(const std::string& s);
 
@@ -25,3 +26,5 @@ inline bool IsAlphanumeric(char c)
 {
 	return IsAlpha(c) || IsDigit(c);
 }
+
+std::string EscapeString(std::string_view s);
