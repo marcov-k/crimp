@@ -9,4 +9,4 @@
 
 #include <vector>
 
-AstProgram* Parse(const SourceMap& source, FileId fileId, const std::vector<Token>& tokens, Diagnostics& diag, Arena& arena);
+AstProgram* Parse(FileId fileId, const std::vector<Token>& tokens, Diagnostics& diag, Arena& arena);

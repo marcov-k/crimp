@@ -1,13 +1,16 @@
 #include "driver.h"
 
+#include "../ast/ast.h"
 #include "../ast/ast_dump.h"
 #include "../ast/ast_dump_tests.h"
+#include "../common/arena.h"
 #include "../common/span.h"
 #include "../common/utils.h"
 #include "../compile_flags.h"
 #include "../diagnostics/diagnostics.h"
 #include "../diagnostics/source_map.h"
 #include "../lexer/lexer.h"
+#include "../parser/parser.h"
 #include "../platform/file_io.h"
 #include "../platform/process.h"
 #include "../platform/startup.h"
@@ -117,25 +120,35 @@ namespace
 			return 1;
 		}
 
-		Diagnostics diags;
+		Diagnostics diag;
 
 		SourceMap sources;
 		FileId id{ sources.Add(PathToUTF8(sourcePath), std::move(text)) };
 
-		std::vector<Token> tokens{ Lex(sources, id, diags) };
+		std::vector<Token> tokens{ Lex(sources, id, diag) };
 		if (flags.dumpTokens)
 		{
 			DumpTokens(sources, id, tokens);
 		}
 
-		for (const Diagnostic& d : diags.All())
+		Arena parseArena{};
+
+		AstProgram* program{ Parse(id, tokens, diag, parseArena) };
+		if (flags.dumpAst)
+		{
+			DumpAst(sources, *program);
+		}
+
+		for (const Diagnostic& d : diag.All())
 		{
 			std::string s{ Render(sources, d) };
 			std::fwrite(s.data(), 1, s.size(), stderr);
 		}
-		if (diags.HasErrors()) return 1;
+		if (diag.HasErrors()) return 1;
 
-		if (flags.dumpTokens) return 0;
+		// TODO: finish IL generation
+		std::printf("code generation is not implemented yet");
+		return 0;
 
 		Tools tools;
 		tools.qbe = ResolveTool(L"CRIMP_QBE", L"qbe");
