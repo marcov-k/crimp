@@ -93,6 +93,7 @@ namespace
 	void Report(ParserState& state, Span span, std::string_view message)
 	{
 		if (state.lastError == state.cursor || At(TokenType::Error, state)) return;
+		if (state.diag.LimitReached()) return;
 
 		state.diag.Error(span, std::string{ message });
 		state.lastError = state.cursor;
@@ -101,6 +102,7 @@ namespace
 	void ReportWithNote(ParserState& state, Span span, std::string_view message, const Note& note)
 	{
 		if (state.lastError == state.cursor || At(TokenType::Error, state)) return;
+		if (state.diag.LimitReached()) return;
 
 		Diagnostic diag{ Severity::Error, span, std::string{ message }, { note } };
 		state.diag.Emit(std::move(diag));
