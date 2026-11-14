@@ -138,25 +138,20 @@ namespace
 		switch (decl->kind)
 		{
 		case DeclKind::Function:
-		{
 			output.append("(function ");
 			AppendSpan(decl->typeRef, text, output);
 			output.append(" ");
 			AppendSpan(decl->name, text, output);
 			output.append(" (");
-			if (decl->params.count > 0)
+			for (std::size_t i{ 0 }; i < decl->params.count; ++i)
 			{
-				for (std::size_t i{ 0 }; i < decl->params.count; ++i)
-				{
-					DumpDecl(decl->params.data[i], text, 0, output);
-					if (i + 1 < decl->params.count) output.append(" ");
-				}
+				DumpDecl(decl->params.data[i], text, 0, output);
+				if (i + 1 < decl->params.count) output.append(" ");
 			}
 			output.append(")\n");
 			DumpStmt(decl->body, text, depth + 1, output);
 			output.append(")");
 			break;
-		}
 		case DeclKind::Param:
 			output.append("(param ");
 			AppendSpan(decl->typeRef, text, output);

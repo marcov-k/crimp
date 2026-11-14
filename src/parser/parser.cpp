@@ -61,12 +61,12 @@ namespace
 		return token;
 	}
 
-	bool At(TokenType type, const ParserState& state)
+	bool At(TokenKind type, const ParserState& state)
 	{
 		return state.tokens[state.cursor].type == type;
 	}
 
-	bool Accept(TokenType type, ParserState& state)
+	bool Accept(TokenKind type, ParserState& state)
 	{
 		if (At(type, state))
 		{
@@ -77,7 +77,7 @@ namespace
 		return false;
 	}
 
-	std::string DescribeToken(TokenType type)
+	std::string DescribeToken(TokenKind type)
 	{
 		std::string out{ "found " };
 
@@ -92,7 +92,7 @@ namespace
 
 	void Report(ParserState& state, Span span, std::string_view message)
 	{
-		if (state.lastError == state.cursor || At(TokenType::Error, state)) return;
+		if (state.lastError == state.cursor || At(TokenKind::Error, state)) return;
 		if (state.diag.LimitReached()) return;
 
 		state.diag.Error(span, std::string{ message });
@@ -101,7 +101,7 @@ namespace
 
 	void ReportWithNote(ParserState& state, Span span, std::string_view message, const Note& note)
 	{
-		if (state.lastError == state.cursor || At(TokenType::Error, state)) return;
+		if (state.lastError == state.cursor || At(TokenKind::Error, state)) return;
 		if (state.diag.LimitReached()) return;
 
 		Diagnostic diag{ Severity::Error, span, std::string{ message }, { note } };
@@ -109,7 +109,7 @@ namespace
 		state.lastError = state.cursor;
 	}
 
-	bool Expect(TokenType type, ParserState& state, std::string_view message)
+	bool Expect(TokenKind type, ParserState& state, std::string_view message)
 	{
 		if (!Accept(type, state))
 		{
@@ -171,19 +171,19 @@ namespace
 
 	bool LooksLikeFunction(const ParserState& state)
 	{
-		TokenType current{ Peek(0, state).type };
-		TokenType next{ Peek(1, state).type };
+		TokenKind current{ Peek(0, state).type };
+		TokenKind next{ Peek(1, state).type };
 
-		return (current == TokenType::Identifier || current == TokenType::KwVoid) && next == TokenType::Identifier;
+		return (current == TokenKind::Identifier || current == TokenKind::KwVoid) && next == TokenKind::Identifier;
 	}
 
 	void SyncStatement(ParserState& state)
 	{
-		while (!At(TokenType::Semicolon, state))
+		while (!At(TokenKind::Semicolon, state))
 		{
-			TokenType token{ Peek(0, state).type };
+			TokenKind token{ Peek(0, state).type };
 
-			if (token == TokenType::RBrace || token == TokenType::Eof || token == TokenType::KwReturn) return;
+			if (token == TokenKind::RBrace || token == TokenKind::Eof || token == TokenKind::KwReturn) return;
 
 			Advance(state);
 		}
@@ -193,25 +193,25 @@ namespace
 	void SyncTopLevel(ParserState& state)
 	{
 		std::size_t braceDepth{ 0 };
-		if (At(TokenType::LBrace, state)) braceDepth = 1;
+		if (At(TokenKind::LBrace, state)) braceDepth = 1;
 
 		Advance(state);
-		while (!At(TokenType::Eof, state))
+		while (!At(TokenKind::Eof, state))
 		{
 			if (braceDepth == 0 && LooksLikeFunction(state)) return;
 
-			if (At(TokenType::LBrace, state)) ++braceDepth;
-			else if (At(TokenType::RBrace, state) && braceDepth > 0) --braceDepth;
+			if (At(TokenKind::LBrace, state)) ++braceDepth;
+			else if (At(TokenKind::RBrace, state) && braceDepth > 0) --braceDepth;
 
 			Advance(state);
 		}
 	}
 
-	int PrecedenceOf(TokenType type)
+	int PrecedenceOf(TokenKind type)
 	{
 		switch (type)
 		{
-		case TokenType::Plus:
+		case TokenKind::Plus:
 			return 10;
 		default:
 			return NO_OP_PREC;
@@ -227,7 +227,7 @@ namespace
 		AstExpr* lhs{ ParseTerm(state) };
 		while (PrecedenceOf(Peek(0, state).type) >= minPrec)
 		{
-			TokenType op{ Advance(state).type };
+			TokenKind op{ Advance(state).type };
 			AstExpr* rhs{ ParseBinary(state, PrecedenceOf(op) + 1) };
 
 			AstExpr* binary{ MakeExpr(ExprKind::Binary, SpanFrom(start, state), state) };
@@ -266,17 +266,17 @@ namespace
 		Advance(state); // '('
 
 		std::vector<AstExpr*> args{};
-		if (!At(TokenType::RParen, state))
+		if (!At(TokenKind::RParen, state))
 		{
 			args.push_back(ParseExpression(state));
 
-			while (Accept(TokenType::Comma, state))
+			while (Accept(TokenKind::Comma, state))
 			{
 				args.push_back(ParseExpression(state));
 			}
 		}
 
-		Expect(TokenType::RParen, state, "expected ')' to close argument list");
+		Expect(TokenKind::RParen, state, "expected ')' to close argument list");
 
 		AstExpr* call{ MakeExpr(ExprKind::Call, SpanFrom(startToken, state), state) };
 		call->name = nameSpan;
@@ -288,16 +288,16 @@ namespace
 	AstExpr* ParseTerm(ParserState& state)
 	{
 		const Token& token{ Peek(0, state) };
-		TokenType type{ token.type };
+		TokenKind type{ token.type };
 		Span span{ token.span };
 
 		switch (type)
 		{
-		case TokenType::Error:
+		case TokenKind::Error:
 			Advance(state);
 			return ErrorExpr(span, state);
-		case TokenType::Identifier:
-			if (Peek(1, state).type == TokenType::LParen)
+		case TokenKind::Identifier:
+			if (Peek(1, state).type == TokenKind::LParen)
 			{
 				return ParseCall(state);
 			}
@@ -308,17 +308,17 @@ namespace
 				expr->name = span;
 				return expr;
 			}
-		case TokenType::IntLiteral:
+		case TokenKind::IntLiteral:
 			Advance(state);
 			return MakeExpr(ExprKind::IntLiteral, span, state);
-		case TokenType::StringLiteral:
+		case TokenKind::StringLiteral:
 			Advance(state);
 			return MakeExpr(ExprKind::StringLiteral, span, state);
-		case TokenType::LParen:
+		case TokenKind::LParen:
 		{
 			Advance(state);
 			AstExpr* expr{ ParseExpression(state) };
-			Expect(TokenType::RParen, state, "expected ')' to close expression");
+			Expect(TokenKind::RParen, state, "expected ')' to close expression");
 			return expr;
 		}
 		default:
@@ -334,7 +334,7 @@ namespace
 		Advance(state); // 'return'
 
 		AstExpr* expr{ ParseExpression(state) };
-		Expect(TokenType::Semicolon, state, "expected ';' after return value");
+		Expect(TokenKind::Semicolon, state, "expected ';' after return value");
 
 		AstStmt* stmt{ MakeStmt(StmtKind::Return, SpanFrom(start, state), state) };
 		stmt->expr = expr;
@@ -344,8 +344,8 @@ namespace
 
 	AstStmt* ParseVarDecl(ParserState& state)
 	{
-		assert(At(TokenType::Identifier, state));
-		assert(Peek(1, state).type == TokenType::Identifier);
+		assert(At(TokenKind::Identifier, state));
+		assert(Peek(1, state).type == TokenKind::Identifier);
 
 		std::size_t start{ state.cursor };
 		Span typeSpan{ Peek(0, state).span };
@@ -356,10 +356,10 @@ namespace
 		Span declSpan;
 
 		AstExpr* init{ nullptr };
-		if (Expect(TokenType::Assign, state, "expected '=' after variable name"))
+		if (Expect(TokenKind::Assign, state, "expected '=' after variable name"))
 		{
 			init = ParseExpression(state);
-			Expect(TokenType::Semicolon, state, "expected ';' after initializer");
+			Expect(TokenKind::Semicolon, state, "expected ';' after initializer");
 			declSpan = SpanFrom(start, state);
 		}
 		else
@@ -384,7 +384,7 @@ namespace
 
 		AstExpr* expr{ ParseExpression(state) };
 
-		Expect(TokenType::Semicolon, state, "expected ';' after expression");
+		Expect(TokenKind::Semicolon, state, "expected ';' after expression");
 
 		AstStmt* stmt{ MakeStmt(StmtKind::ExprStmt, SpanFrom(start, state), state) };
 		stmt->expr = expr;
@@ -394,17 +394,17 @@ namespace
 
 	AstStmt* ParseStatement(ParserState& state)
 	{
-		TokenType type{ Peek(0, state).type };
+		TokenKind type{ Peek(0, state).type };
 
 		switch (type)
 		{
-		case TokenType::Identifier:
-			if (Peek(1, state).type == TokenType::Identifier)
+		case TokenKind::Identifier:
+			if (Peek(1, state).type == TokenKind::Identifier)
 			{
 				return ParseVarDecl(state);
 			}
 			return ParseExprStmt(state);
-		case TokenType::KwReturn:
+		case TokenKind::KwReturn:
 			return ParseReturn(state);
 		default:
 			return ParseExprStmt(state);
@@ -413,7 +413,7 @@ namespace
 
 	AstStmt* ParseBlock(ParserState& state)
 	{
-		assert(At(TokenType::LBrace, state));
+		assert(At(TokenKind::LBrace, state));
 
 		std::size_t lBracePos{ state.cursor };
 		Span lBraceSpan{ Peek(0, state).span };
@@ -421,7 +421,7 @@ namespace
 		Advance(state); // '{'
 
 		std::vector<AstStmt*> stmts{};
-		while (!At(TokenType::RBrace, state) && !At(TokenType::Eof, state))
+		while (!At(TokenKind::RBrace, state) && !At(TokenKind::Eof, state))
 		{
 			std::size_t iterCursor{ state.cursor };
 
@@ -430,7 +430,7 @@ namespace
 			if (state.cursor == iterCursor) Advance(state);
 		}
 
-		if (!Accept(TokenType::RBrace, state))
+		if (!Accept(TokenKind::RBrace, state))
 		{
 			std::size_t prevEnd{ PrevEnd(state) };
 			ReportWithNote(state, { state.fileId, prevEnd, prevEnd }, "expected '}' to close block, " + DescribeToken(Peek(0, state).type), { lBraceSpan, "block opened here" });
@@ -447,10 +447,10 @@ namespace
 		std::size_t start{ state.cursor };
 
 		Span typeSpan{ Peek(0, state).span };
-		Expect(TokenType::Identifier, state, "expected parameter type");
+		Expect(TokenKind::Identifier, state, "expected parameter type");
 
 		Span nameSpan{ Peek(0, state).span };
-		Expect(TokenType::Identifier, state, "expected parameter name");
+		Expect(TokenKind::Identifier, state, "expected parameter name");
 
 		AstDecl* param{ MakeDecl(DeclKind::Param, SpanFrom(start, state), state) };
 		param->typeRef = typeSpan;
@@ -469,31 +469,31 @@ namespace
 		Span nameSpan{ Peek(0, state).span };
 		Advance(state);
 
-		Expect(TokenType::LParen, state, "expected '(' after function name");
+		Expect(TokenKind::LParen, state, "expected '(' after function name");
 
 		std::vector<AstDecl*> params{};
-		if (!At(TokenType::RParen, state))
+		if (!At(TokenKind::RParen, state))
 		{
 			params.push_back(ParseParam(state));
 
-			while (Accept(TokenType::Comma, state))
+			while (Accept(TokenKind::Comma, state))
 			{
 				params.push_back(ParseParam(state));
 			}
 		}
 
-		Expect(TokenType::RParen, state, "expected ')' after parameters");
+		Expect(TokenKind::RParen, state, "expected ')' after parameters");
 
 		AstStmt* body{ nullptr };
-		if (At(TokenType::LBrace, state))
+		if (At(TokenKind::LBrace, state))
 		{
 			body = ParseBlock(state);
 		}
 		else
 		{
-			while (!At(TokenType::LBrace, state) && !At(TokenType::Semicolon, state) && !At(TokenType::RBrace, state) && !At(TokenType::Eof, state)) Advance(state);
+			while (!At(TokenKind::LBrace, state) && !At(TokenKind::Semicolon, state) && !At(TokenKind::RBrace, state) && !At(TokenKind::Eof, state)) Advance(state);
 
-			if (At(TokenType::LBrace, state))
+			if (At(TokenKind::LBrace, state))
 			{
 				body = ParseBlock(state);
 			}
@@ -520,7 +520,7 @@ namespace
 	{
 		std::vector<AstDecl*> decls{};
 
-		while (!At(TokenType::Eof, state))
+		while (!At(TokenKind::Eof, state))
 		{
 			std::size_t iterCursor{ state.cursor };
 

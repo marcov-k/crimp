@@ -48,7 +48,7 @@ namespace
 
 		"", // DelimiterEnd
 	};
-	static_assert(std::size(spellings) == static_cast<std::size_t>(TokenType::DelimiterEnd) + 1);
+	static_assert(std::size(spellings) == static_cast<std::size_t>(TokenKind::DelimiterEnd) + 1);
 
 	constexpr std::string_view tokenNames[] =
 	{
@@ -93,28 +93,28 @@ namespace
 
 		"DelimiterEnd",
 	};
-	static_assert(std::size(tokenNames) == static_cast<std::size_t>(TokenType::DelimiterEnd) + 1);
+	static_assert(std::size(tokenNames) == static_cast<std::size_t>(TokenKind::DelimiterEnd) + 1);
 }
 
-std::string_view GetSpelling(TokenType token)
+std::string_view GetSpelling(TokenKind token)
 {
 	return spellings[static_cast<std::size_t>(token)];
 }
 
-TokenType GetKeywordType(std::string_view spelling)
+TokenKind GetKeywordType(std::string_view spelling)
 {
-	for (std::size_t i{ static_cast<std::size_t>(TokenType::KeywordStart) + 1 }; i < static_cast<std::size_t>(TokenType::KeywordEnd); ++i)
+	for (std::size_t i{ static_cast<std::size_t>(TokenKind::KeywordStart) + 1 }; i < static_cast<std::size_t>(TokenKind::KeywordEnd); ++i)
 	{
 		if (spelling == spellings[i])
 		{
-			return static_cast<TokenType>(i);
+			return static_cast<TokenKind>(i);
 		}
 	}
 
-	return TokenType::Identifier;
+	return TokenKind::Identifier;
 }
 
-std::string_view GetTokenName(TokenType type)
+std::string_view GetTokenName(TokenKind type)
 {
 	return tokenNames[static_cast<std::size_t>(type)];
 }

@@ -3,9 +3,10 @@
 #include "../common/span.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <string_view>
 
-enum class TokenType : uint8_t
+enum class TokenKind : std::uint8_t
 {
 	SpecialStart,
 
@@ -49,40 +50,40 @@ enum class TokenType : uint8_t
 	DelimiterEnd,
 };
 
-inline bool IsSpecial(TokenType type)
+inline bool IsSpecial(TokenKind type)
 {
-	return type > TokenType::SpecialStart && type < TokenType::SpecialEnd;
+	return type > TokenKind::SpecialStart && type < TokenKind::SpecialEnd;
 }
 
-inline bool IsAtom(TokenType type)
+inline bool IsAtom(TokenKind type)
 {
-	return type > TokenType::AtomStart && type < TokenType::AtomEnd;
+	return type > TokenKind::AtomStart && type < TokenKind::AtomEnd;
 }
 
-inline bool IsKeyword(TokenType type)
+inline bool IsKeyword(TokenKind type)
 {
-	return type > TokenType::KeywordStart && type < TokenType::KeywordEnd;
+	return type > TokenKind::KeywordStart && type < TokenKind::KeywordEnd;
 }
 
-inline bool IsOperator(TokenType type)
+inline bool IsOperator(TokenKind type)
 {
-	return type > TokenType::OperatorStart && type < TokenType::OperatorEnd;
+	return type > TokenKind::OperatorStart && type < TokenKind::OperatorEnd;
 }
 
-inline bool IsDelimiter(TokenType type)
+inline bool IsDelimiter(TokenKind type)
 {
-	return type > TokenType::DelimiterStart && type < TokenType::DelimiterEnd;
+	return type > TokenKind::DelimiterStart && type < TokenKind::DelimiterEnd;
 }
 
-std::string_view GetSpelling(TokenType token);
+std::string_view GetSpelling(TokenKind token);
 
-TokenType GetKeywordType(std::string_view spelling);
+TokenKind GetKeywordType(std::string_view spelling);
 
-std::string_view GetTokenName(TokenType type);
+std::string_view GetTokenName(TokenKind type);
 
 struct Token
 {
-	TokenType type{ TokenType::Eof };
+	TokenKind type{ TokenKind::Eof };
 	Span span{};
 	std::size_t id{};
 };

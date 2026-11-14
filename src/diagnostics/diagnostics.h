@@ -5,10 +5,11 @@
 #include "../common/span.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 
-enum class Severity
+enum class Severity : std::uint8_t
 {
 	Error,
 	Warning,

@@ -1,11 +1,13 @@
 #pragma once
 
+#include "../common/list.h"
 #include "../common/span.h"
 #include "../lexer/tokens.h"
 
 #include <cstddef>
+#include <cstdint>
 
-enum class ExprKind
+enum class ExprKind : std::uint8_t
 {
 	Error,
 	IntLiteral,
@@ -15,7 +17,7 @@ enum class ExprKind
 	Call,
 };
 
-enum class StmtKind
+enum class StmtKind : std::uint8_t
 {
 	Error,
 	VarDecl,
@@ -24,32 +26,18 @@ enum class StmtKind
 	Block,
 };
 
-enum class DeclKind
+enum class DeclKind : std::uint8_t
 {
 	Function,
 	Param,
 };
 
+struct Type;
+struct Symbol;
+
 struct AstExpr;
 struct AstStmt;
 struct AstDecl;
-
-template<typename T>
-struct List
-{
-	T* data{ nullptr };
-	std::size_t count{ 0 };
-
-	T* begin() const
-	{
-		return data;
-	}
-
-	T* end() const
-	{
-		return data + count;
-	}
-};
 
 struct AstProgram
 {
@@ -62,10 +50,12 @@ struct AstExpr
 	ExprKind kind{ ExprKind::Error };
 	Span span{};
 	Span name{};
-	TokenType op{ TokenType::Eof };
+	TokenKind op{ TokenKind::Eof };
 	AstExpr* lhs{ nullptr };
 	AstExpr* rhs{ nullptr };
 	List<AstExpr*> args{};
+	const Type* type{ nullptr };
+	Symbol* symbol{ nullptr };
 };
 
 struct AstStmt
@@ -76,6 +66,7 @@ struct AstStmt
 	Span name{};
 	AstExpr* expr{ nullptr }; // initializer, return value, or expression statement
 	List<AstStmt*> stmts{};
+	Symbol* symbol{ nullptr };
 };
 
 struct AstDecl
@@ -86,4 +77,5 @@ struct AstDecl
 	Span name{};
 	List<AstDecl*> params{};
 	AstStmt* body{ nullptr }; // parameter has no body
+	Symbol* symbol{ nullptr };
 };

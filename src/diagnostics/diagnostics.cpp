@@ -3,6 +3,7 @@
 #include "source_map.h"
 #include "../common/span.h"
 
+#include <cassert>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -92,6 +93,8 @@ Diagnostics::Diagnostics(std::size_t maxErrors) : _maxErrors(maxErrors) {}
 
 void Diagnostics::Emit(Diagnostic d)
 {
+	assert(d.span.begin <= d.span.end);
+
 	if (d.severity == Severity::Error) ++_errors;
 	_list.push_back(std::move(d));
 }

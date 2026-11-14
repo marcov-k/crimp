@@ -3,6 +3,7 @@
 #include "../ast/ast.h"
 #include "../ast/ast_dump.h"
 #include "../ast/ast_dump_tests.h"
+#include "../checker/checker.h"
 #include "../common/arena.h"
 #include "../common/span.h"
 #include "../common/utils.h"
@@ -128,7 +129,9 @@ namespace
 		std::vector<Token> tokens{ Lex(sources, id, diag) };
 		if (flags.dumpTokens)
 		{
+			std::printf("\n------Token Dump------\n\n");
 			DumpTokens(sources, id, tokens);
+			std::printf("----------------------\n");
 		}
 
 		Arena parseArena{};
@@ -136,7 +139,9 @@ namespace
 		AstProgram* program{ Parse(id, tokens, diag, parseArena) };
 		if (flags.dumpAst)
 		{
+			std::printf("\n-------AST Dump-------\n\n");
 			DumpAst(sources, *program);
+			std::printf("----------------------\n");
 		}
 
 		for (const Diagnostic& d : diag.All())
@@ -147,7 +152,7 @@ namespace
 		if (diag.HasErrors()) return 1;
 
 		// TODO: finish IL generation
-		std::printf("code generation is not implemented yet");
+		std::printf("\ncode generation is not implemented yet\n");
 		return 0;
 
 		Tools tools;

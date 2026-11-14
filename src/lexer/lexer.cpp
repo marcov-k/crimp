@@ -47,7 +47,7 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 
 			while (pos < textSize && (IsAlphanumeric(text[pos]) || text[pos] == '_')) ++pos;
 
-			TokenType type{ GetKeywordType(text.substr(start, pos - start)) };
+			TokenKind type{ GetKeywordType(text.substr(start, pos - start)) };
 			Span slice{ sourceId, start, pos };
 
 			tokens.push_back({ type, slice });
@@ -67,12 +67,12 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 
 				Span slice{ sourceId, start, pos };
 				diag.Error(slice, "encountered malformed integer literal");
-				tokens.push_back({ TokenType::Error, slice });
+				tokens.push_back({ TokenKind::Error, slice });
 			}
 			else
 			{
 				Span slice{ sourceId, start, pos };
-				tokens.push_back({ TokenType::IntLiteral, slice });
+				tokens.push_back({ TokenKind::IntLiteral, slice });
 			}
 
 			continue;
@@ -100,44 +100,44 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 					--slice.end;
 				}
 				diag.Error(slice, "encountered unterminated string literal");
-				tokens.push_back({ TokenType::Error, slice });
+				tokens.push_back({ TokenKind::Error, slice });
 			}
 			else
 			{
 				++pos;
-				tokens.push_back({ TokenType::StringLiteral, { sourceId, start, pos } });
+				tokens.push_back({ TokenKind::StringLiteral, { sourceId, start, pos } });
 			}
 
 			continue;
 		}
 
-		TokenType type{ TokenType::Error };
+		TokenKind type{ TokenKind::Error };
 		Span slice{ sourceId, pos, pos + 1 };
 		switch (c)
 		{
 		case ';':
-			type = TokenType::Semicolon;
+			type = TokenKind::Semicolon;
 			break;
 		case '(':
-			type = TokenType::LParen;
+			type = TokenKind::LParen;
 			break;
 		case ')':
-			type = TokenType::RParen;
+			type = TokenKind::RParen;
 			break;
 		case '{':
-			type = TokenType::LBrace;
+			type = TokenKind::LBrace;
 			break;
 		case '}':
-			type = TokenType::RBrace;
+			type = TokenKind::RBrace;
 			break;
 		case ',':
-			type = TokenType::Comma;
+			type = TokenKind::Comma;
 			break;
 		case '=':
-			type = TokenType::Assign;
+			type = TokenKind::Assign;
 			break;
 		case '+':
-			type = TokenType::Plus;
+			type = TokenKind::Plus;
 			break;
 		default:
 		{
@@ -156,7 +156,7 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 			}
 
 			diag.Error(errSlice, "encountered unknown character");
-			tokens.push_back({ TokenType::Error, errSlice });
+			tokens.push_back({ TokenKind::Error, errSlice });
 
 			continue;
 		}
@@ -166,7 +166,7 @@ std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics&
 		tokens.push_back({ type, slice });
 	}
 
-	tokens.push_back({ TokenType::Eof, { sourceId, textSize, textSize } });
+	tokens.push_back({ TokenKind::Eof, { sourceId, textSize, textSize } });
 
 	return tokens;
 }

@@ -91,7 +91,7 @@ namespace
 			return e;
 		}
 
-		AstExpr* Binary(TokenType op, AstExpr* lhs, AstExpr* rhs)
+		AstExpr* Binary(TokenKind op, AstExpr* lhs, AstExpr* rhs)
 		{
 			AstExpr* e{ _arena.Create<AstExpr>() };
 			e->kind = ExprKind::Binary;
@@ -318,7 +318,7 @@ int main()
 	{
 		TreeBuilder t{ kAddSource };
 
-		AstExpr* sum{ t.Binary(TokenType::Plus,
+		AstExpr* sum{ t.Binary(TokenKind::Plus,
 			t.Name(t.At("a + b", "a")),
 			t.Name(t.At("a + b", "b"))) };
 		AstStmt* addBody{ t.Block({ t.Return(sum) }) };
@@ -423,10 +423,10 @@ int main()
 	{
 		TreeBuilder t{ "int sum() { return a + b + c; }\n" };
 
-		AstExpr* ab{ t.Binary(TokenType::Plus,
+		AstExpr* ab{ t.Binary(TokenKind::Plus,
 			t.Name(t.At("a + b + c", "a")),
 			t.Name(t.At("a + b + c", "b"))) };
-		AstExpr* abc{ t.Binary(TokenType::Plus, ab, t.Name(t.At("a + b + c", "c"))) };
+		AstExpr* abc{ t.Binary(TokenKind::Plus, ab, t.Name(t.At("a + b + c", "c"))) };
 		AstStmt* body{ t.Block({ t.Return(abc) }) };
 		AstDecl* fn{ t.Function(t.At("int sum", "int"), t.At("int sum", "sum"),{}, body) };
 
