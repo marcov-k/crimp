@@ -24,7 +24,7 @@ HANDLE ScopedHandle::Get() const
 
 bool ScopedHandle::Valid() const
 {
-	return _h != nullptr && _h != INVALID_HANDLE_VALUE;
+	return _h && _h != INVALID_HANDLE_VALUE;
 }
 
 HANDLE ScopedHandle::Release()

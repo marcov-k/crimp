@@ -184,7 +184,7 @@ namespace
 
 		std::string Dump(const AstProgram* program) const
 		{
-			return DumpAstToString(_sources, *program);
+			return DumpAstToString(_sources, program);
 		}
 
 	private:

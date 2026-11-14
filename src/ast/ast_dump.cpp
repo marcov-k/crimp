@@ -102,8 +102,12 @@ namespace
 			output.append(")");
 			break;
 		case StmtKind::Return:
-			output.append("(return ");
-			DumpExpr(stmt->expr, text, output);
+			output.append("(return");
+			if (stmt->expr)
+			{
+				output.append(" ");
+				DumpExpr(stmt->expr, text, output);
+			}
 			output.append(")");
 			break;
 		case StmtKind::ExprStmt:
@@ -163,12 +167,12 @@ namespace
 	}
 }
 
-std::string DumpAstToString(const SourceMap& source, const AstProgram& program)
+std::string DumpAstToString(const SourceMap& source, const AstProgram* program)
 {
-	std::string_view text{ source.File(program.fileId).text };
+	std::string_view text{ source.File(program->fileId).text };
 
 	std::string output{};
-	for (const AstDecl* decl : program.body)
+	for (const AstDecl* decl : program->body)
 	{
 		DumpDecl(decl, text, 0, output);
 		output.append("\n");
@@ -177,7 +181,7 @@ std::string DumpAstToString(const SourceMap& source, const AstProgram& program)
 	return output;
 }
 
-void DumpAst(const SourceMap& source, const AstProgram& program)
+void DumpAst(const SourceMap& source, const AstProgram* program)
 {
 	std::string output{ DumpAstToString(source, program) };
 	std::fwrite(output.data(), 1, output.size(), stdout);

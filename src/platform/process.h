@@ -1,7 +1,5 @@
 #pragma once
 
-#include "scoped_handle.h"
-
 #include <windows.h>
 
 #include <filesystem>

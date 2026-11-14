@@ -1,11 +1,12 @@
 #pragma once
 
-#include "tokens.h"
 #include "../common/span.h"
-#include "../diagnostics/diagnostics.h"
-#include "../diagnostics/source_map.h"
 
 #include <vector>
+
+struct Token;
+class SourceMap;
+class Diagnostics;
 
 [[nodiscard]]
 std::vector<Token> Lex(const SourceMap& sourceMap, FileId sourceId, Diagnostics& diag);

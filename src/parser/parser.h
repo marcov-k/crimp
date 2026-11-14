@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../ast/ast.h"
-#include "../common/arena.h"
 #include "../common/span.h"
-#include "../diagnostics/diagnostics.h"
-#include "../diagnostics/source_map.h"
-#include "../lexer/tokens.h"
 
 #include <vector>
+
+struct AstProgram;
+struct Token;
+class Diagnostics;
+class Arena;
 
 AstProgram* Parse(FileId fileId, const std::vector<Token>& tokens, Diagnostics& diag, Arena& arena);

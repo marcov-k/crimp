@@ -2,8 +2,6 @@
 
 #include "source_map.h"
 
-#include "../common/span.h"
-
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -15,6 +13,8 @@ enum class Severity : std::uint8_t
 	Warning,
 	Note
 };
+
+struct Span;
 
 struct Note
 {

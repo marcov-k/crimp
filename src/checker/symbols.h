@@ -1,9 +1,9 @@
 #pragma once
 
-#include "types.h"
 #include "../common/list.h"
 #include "../common/span.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string_view>
 #include <type_traits>
@@ -13,16 +13,21 @@ enum class SymbolKind : std::uint8_t
 	Function,
 	Param,
 	Local,
+	Type,
 };
 
+struct Type;
 struct AstDecl;
 struct AstStmt;
+
+using NameId = std::size_t;
 
 struct Symbol
 {
 	SymbolKind kind{ SymbolKind::Function };
 	std::string_view name; // can only point into text in the arena
-	const Type* type{ nullptr }; // Variable
+	NameId nameId;
+	const Type* type{ nullptr }; // Variable/Type
 	Span declSpan; // empty for builtin
 	const AstDecl* declNode{ nullptr }; // Function/Param (not builtin)
 	const AstStmt* stmtNode{ nullptr }; // Local (not builtin)

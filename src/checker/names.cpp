@@ -32,7 +32,7 @@ NameId Names::Intern(std::string_view text)
 
 NameId Names::Intern(const Span& span, const SourceMap& source)
 {
-	auto& text{ source.File(span.file).text };
+	const auto& text{ source.File(span.file).text };
 
 	assert(span.begin <= span.end && span.end <= text.size());
 

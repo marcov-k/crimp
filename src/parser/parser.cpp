@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -322,7 +323,7 @@ namespace
 			return expr;
 		}
 		default:
-			Report(state, span, "expected expression, " + DescribeToken(type));
+			Report(state, span, std::format("expected expression, {}", DescribeToken(type)));
 			return ErrorExpr({ state.fileId, span.begin, span.begin }, state);
 		}
 	}
@@ -333,8 +334,13 @@ namespace
 
 		Advance(state); // 'return'
 
-		AstExpr* expr{ ParseExpression(state) };
-		Expect(TokenKind::Semicolon, state, "expected ';' after return value");
+		AstExpr* expr{ nullptr };
+		if (At(TokenKind::Semicolon, state)) Advance(state);
+		else
+		{
+			expr = ParseExpression(state);
+			Expect(TokenKind::Semicolon, state, "expected ';' after return value");
+		}
 
 		AstStmt* stmt{ MakeStmt(StmtKind::Return, SpanFrom(start, state), state) };
 		stmt->expr = expr;
@@ -433,7 +439,8 @@ namespace
 		if (!Accept(TokenKind::RBrace, state))
 		{
 			std::size_t prevEnd{ PrevEnd(state) };
-			ReportWithNote(state, { state.fileId, prevEnd, prevEnd }, "expected '}' to close block, " + DescribeToken(Peek(0, state).type), { lBraceSpan, "block opened here" });
+			ReportWithNote(state, { state.fileId, prevEnd, prevEnd }, std::format("expected '}' to close block, {}", DescribeToken(Peek(0, state).type)),
+				{ lBraceSpan, "block opened here" });
 		}
 
 		AstStmt* block{ MakeStmt(StmtKind::Block, SpanFrom(lBracePos, state), state) };
@@ -500,7 +507,7 @@ namespace
 			else
 			{
 				const Token& token{ Peek(0, state) };
-				Report(state, SpanFrom(start, state), "expected function body, " + DescribeToken(token.type));
+				Report(state, SpanFrom(start, state), std::format("expected function body, {}", DescribeToken(token.type)));
 				body = ErrorStmt({ state.fileId, token.span.begin, token.span.begin }, state);
 
 				SyncTopLevel(state);
@@ -531,11 +538,7 @@ namespace
 			else
 			{
 				const Token& token{ Peek(0, state) };
-
-				std::string msg{ "expected a function declaration, " };
-				msg.append(DescribeToken(token.type));
-				
-				Report(state, token.span, msg);
+				Report(state, token.span, std::format("expected a function declaration, {}", DescribeToken(token.type)));
 				SyncTopLevel(state);
 			}
 

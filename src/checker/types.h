@@ -53,14 +53,14 @@ inline const Type* StringType()
 
 inline bool IsError(const Type* t)
 {
-	assert(t != nullptr);
+	assert(t);
 
 	return t->kind == TypeKind::Error;
 }
 
 inline bool IsCompatible(const Type* from, const Type* to)
 {
-	assert(from != nullptr && to != nullptr);
+	assert(from && to);
 
 	return IsError(from) || IsError(to) || from == to;
 }

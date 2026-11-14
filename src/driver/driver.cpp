@@ -140,7 +140,7 @@ namespace
 		if (flags.dumpAst)
 		{
 			std::printf("\n-------AST Dump-------\n\n");
-			DumpAst(sources, *program);
+			DumpAst(sources, program);
 			std::printf("----------------------\n");
 		}
 
