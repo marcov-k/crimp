@@ -113,6 +113,8 @@ namespace
 
 	int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
 	{
+		std::printf("\nCompiling Crimp source code...\n");
+
 		std::string text, err;
 
 		if (!ReadFile(sourcePath, text, err))
@@ -134,15 +136,24 @@ namespace
 			std::printf("----------------------\n");
 		}
 
-		Arena parseArena{};
+		Arena arena{};
 
-		AstProgram* program{ Parse(id, tokens, diag, parseArena) };
+		AstProgram* program{ Parse(id, tokens, diag, arena) };
 		if (flags.dumpAst)
 		{
 			std::printf("\n-------AST Dump-------\n\n");
 			DumpAst(sources, program);
 			std::printf("----------------------\n");
 		}
+
+		for (const Diagnostic& d : diag.All())
+		{
+			std::string s{ Render(sources, d) };
+			std::fwrite(s.data(), 1, s.size(), stderr);
+		}
+		if (diag.HasErrors()) return 1;
+
+		Analyze(program, sources, diag, arena);
 
 		for (const Diagnostic& d : diag.All())
 		{

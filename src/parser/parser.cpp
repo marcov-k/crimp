@@ -14,6 +14,7 @@
 #include <format>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace
@@ -286,6 +287,41 @@ namespace
 		return call;
 	}
 
+	AstExpr* ParseIdentifier(ParserState& state, const Span& span)
+	{
+		if (Peek(1, state).type == TokenKind::LParen)
+		{
+			return ParseCall(state);
+		}
+		else
+		{
+			Advance(state);
+			AstExpr* expr{ MakeExpr(ExprKind::Name, span, state) };
+			expr->name = span;
+			return expr;
+		}
+	}
+
+	AstExpr* ParseIntLiteral(ParserState& state, const Span& span)
+	{
+		Advance(state);
+		return MakeExpr(ExprKind::IntLiteral, span, state);
+	}
+
+	AstExpr* ParseStringLiteral(ParserState& state, const Span& span)
+	{
+		Advance(state);
+		return MakeExpr(ExprKind::StringLiteral, span, state);
+	}
+
+	AstExpr* ParseLParen(ParserState& state)
+	{
+		Advance(state);
+		AstExpr* expr{ ParseExpression(state) };
+		Expect(TokenKind::RParen, state, "expected ')' to close expression");
+		return expr;
+	}
+
 	AstExpr* ParseTerm(ParserState& state)
 	{
 		const Token& token{ Peek(0, state) };
@@ -298,30 +334,13 @@ namespace
 			Advance(state);
 			return ErrorExpr(span, state);
 		case TokenKind::Identifier:
-			if (Peek(1, state).type == TokenKind::LParen)
-			{
-				return ParseCall(state);
-			}
-			else
-			{
-				Advance(state);
-				AstExpr* expr{ MakeExpr(ExprKind::Name, span, state) };
-				expr->name = span;
-				return expr;
-			}
+			return ParseIdentifier(state, span);
 		case TokenKind::IntLiteral:
-			Advance(state);
-			return MakeExpr(ExprKind::IntLiteral, span, state);
+			return ParseIntLiteral(state, span);
 		case TokenKind::StringLiteral:
-			Advance(state);
-			return MakeExpr(ExprKind::StringLiteral, span, state);
+			return ParseStringLiteral(state, span);
 		case TokenKind::LParen:
-		{
-			Advance(state);
-			AstExpr* expr{ ParseExpression(state) };
-			Expect(TokenKind::RParen, state, "expected ')' to close expression");
-			return expr;
-		}
+			return ParseLParen(state);
 		default:
 			Report(state, span, std::format("expected expression, {}", DescribeToken(type)));
 			return ErrorExpr({ state.fileId, span.begin, span.begin }, state);
@@ -439,7 +458,7 @@ namespace
 		if (!Accept(TokenKind::RBrace, state))
 		{
 			std::size_t prevEnd{ PrevEnd(state) };
-			ReportWithNote(state, { state.fileId, prevEnd, prevEnd }, std::format("expected '}' to close block, {}", DescribeToken(Peek(0, state).type)),
+			ReportWithNote(state, { state.fileId, prevEnd, prevEnd }, std::format("expected '}}' to close block, {}", DescribeToken(Peek(0, state).type)),
 				{ lBraceSpan, "block opened here" });
 		}
 

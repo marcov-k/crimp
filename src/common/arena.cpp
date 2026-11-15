@@ -16,7 +16,7 @@ namespace
 
 void* Arena::Alloc(std::size_t size, std::size_t alignment)
 {
-	assert(alignment % 2 == 0);
+	assert(alignment != 0 && (alignment & (alignment - 1)) == 0);
 
 	std::uintptr_t end{ reinterpret_cast<std::uintptr_t>(_end) };
 	std::uintptr_t cursor{ AlignAddress(_cursor, alignment) };

@@ -27,6 +27,52 @@ namespace
 		output.append(text.substr(span.begin, span.end - span.begin));
 	}
 
+	void DumpExpr(const AstExpr* expr, std::string_view text, std::string& output);
+
+	void DumpIntLiteral(const AstExpr* expr, std::string_view text, std::string& output)
+	{
+		output.append("(int ");
+		AppendSpan(expr->span, text, output);
+		output.append(")");
+	}
+
+	void DumpStringLiteral(const AstExpr* expr, std::string_view text, std::string& output)
+	{
+		output.append("(string ");
+		AppendSpan(expr->span, text, output);
+		output.append(")");
+	}
+
+	void DumpName(const AstExpr* expr, std::string_view text, std::string& output)
+	{
+		output.append("(name ");
+		AppendSpan(expr->name, text, output);
+		output.append(")");
+	}
+
+	void DumpBinary(const AstExpr* expr, std::string_view text, std::string& output)
+	{
+		output.append("(");
+		output.append(GetSpelling(expr->op));
+		output.append(" ");
+		DumpExpr(expr->lhs, text, output);
+		output.append(" ");
+		DumpExpr(expr->rhs, text, output);
+		output.append(")");
+	}
+
+	void DumpCall(const AstExpr* expr, std::string_view text, std::string& output)
+	{
+		output.append("(call ");
+		AppendSpan(expr->name, text, output);
+		for (const AstExpr* arg : expr->args)
+		{
+			output.append(" ");
+			DumpExpr(arg, text, output);
+		}
+		output.append(")");
+	}
+
 	void DumpExpr(const AstExpr* expr, std::string_view text, std::string& output)
 	{
 		if (!expr)
@@ -41,40 +87,63 @@ namespace
 			output.append("(error)");
 			break;
 		case ExprKind::IntLiteral:
-			output.append("(int ");
-			AppendSpan(expr->span, text, output);
-			output.append(")");
+			DumpIntLiteral(expr, text, output);
 			break;
 		case ExprKind::StringLiteral:
-			output.append("(string ");
-			AppendSpan(expr->span, text, output);
-			output.append(")");
+			DumpStringLiteral(expr, text, output);
 			break;
 		case ExprKind::Name:
-			output.append("(name ");
-			AppendSpan(expr->name, text, output);
-			output.append(")");
+			DumpName(expr, text, output);
 			break;
 		case ExprKind::Binary:
-			output.append("(");
-			output.append(GetSpelling(expr->op));
-			output.append(" ");
-			DumpExpr(expr->lhs, text, output);
-			output.append(" ");
-			DumpExpr(expr->rhs, text, output);
-			output.append(")");
+			DumpBinary(expr, text, output);
 			break;
 		case ExprKind::Call:
-			output.append("(call ");
-			AppendSpan(expr->name, text, output);
-			for (const AstExpr* arg : expr->args)
-			{
-				output.append(" ");
-				DumpExpr(arg, text, output);
-			}
-			output.append(")");
+			DumpCall(expr, text, output);
 			break;
 		}
+	}
+
+	void DumpStmt(const AstStmt* stmt, std::string_view text, std::size_t depth, std::string& output);
+
+	void DumpVarDecl(const AstStmt* stmt, std::string_view text, std::string& output)
+	{
+		output.append("(var ");
+		AppendSpan(stmt->typeRef, text, output);
+		output.append(" ");
+		AppendSpan(stmt->name, text, output);
+		output.append(" ");
+		DumpExpr(stmt->expr, text, output);
+		output.append(")");
+	}
+
+	void DumpReturn(const AstStmt* stmt, std::string_view text, std::string& output)
+	{
+		output.append("(return");
+		if (stmt->expr)
+		{
+			output.append(" ");
+			DumpExpr(stmt->expr, text, output);
+		}
+		output.append(")");
+	}
+
+	void DumpExprStmt(const AstStmt* stmt, std::string_view text, std::string& output)
+	{
+		output.append("(expr ");
+		DumpExpr(stmt->expr, text, output);
+		output.append(")");
+	}
+
+	void DumpBlock(const AstStmt* stmt, std::string_view text, std::size_t depth, std::string& output)
+	{
+		output.append("(block");
+		for (const AstStmt* child : stmt->stmts)
+		{
+			output.append("\n");
+			DumpStmt(child, text, depth + 1, output);
+		}
+		output.append(")");
 	}
 
 	void DumpStmt(const AstStmt* stmt, std::string_view text, std::size_t depth, std::string& output)
@@ -93,40 +162,46 @@ namespace
 			output.append("(error)");
 			break;
 		case StmtKind::VarDecl:
-			output.append("(var ");
-			AppendSpan(stmt->typeRef, text, output);
-			output.append(" ");
-			AppendSpan(stmt->name, text, output);
-			output.append(" ");
-			DumpExpr(stmt->expr, text, output);
-			output.append(")");
+			DumpVarDecl(stmt, text, output);
 			break;
 		case StmtKind::Return:
-			output.append("(return");
-			if (stmt->expr)
-			{
-				output.append(" ");
-				DumpExpr(stmt->expr, text, output);
-			}
-			output.append(")");
+			DumpReturn(stmt, text, output);
 			break;
 		case StmtKind::ExprStmt:
-			output.append("(expr ");
-			DumpExpr(stmt->expr, text, output);
-			output.append(")");
+			DumpExprStmt(stmt, text, output);
 			break;
 		case StmtKind::Block:
-		{
-			output.append("(block");
-			for (const AstStmt* child : stmt->stmts)
-			{
-				output.append("\n");
-				DumpStmt(child, text, depth + 1, output);
-			}
-			output.append(")");
+			DumpBlock(stmt, text, depth, output);
 			break;
 		}
+	}
+
+	void DumpDecl(const AstDecl* decl, std::string_view text, std::size_t depth, std::string& output);
+
+	void DumpFunction(const AstDecl* decl, std::string_view text, std::size_t depth, std::string& output)
+	{
+		output.append("(function ");
+		AppendSpan(decl->typeRef, text, output);
+		output.append(" ");
+		AppendSpan(decl->name, text, output);
+		output.append(" (");
+		for (std::size_t i{ 0 }; i < decl->params.count; ++i)
+		{
+			DumpDecl(decl->params.data[i], text, 0, output);
+			if (i + 1 < decl->params.count) output.append(" ");
 		}
+		output.append(")\n");
+		DumpStmt(decl->body, text, depth + 1, output);
+		output.append(")");
+	}
+
+	void DumpParam(const AstDecl* decl, std::string_view text, std::string& output)
+	{
+		output.append("(param ");
+		AppendSpan(decl->typeRef, text, output);
+		output.append(" ");
+		AppendSpan(decl->name, text, output);
+		output.append(")");
 	}
 
 	void DumpDecl(const AstDecl* decl, std::string_view text, std::size_t depth, std::string& output)
@@ -142,26 +217,10 @@ namespace
 		switch (decl->kind)
 		{
 		case DeclKind::Function:
-			output.append("(function ");
-			AppendSpan(decl->typeRef, text, output);
-			output.append(" ");
-			AppendSpan(decl->name, text, output);
-			output.append(" (");
-			for (std::size_t i{ 0 }; i < decl->params.count; ++i)
-			{
-				DumpDecl(decl->params.data[i], text, 0, output);
-				if (i + 1 < decl->params.count) output.append(" ");
-			}
-			output.append(")\n");
-			DumpStmt(decl->body, text, depth + 1, output);
-			output.append(")");
+			DumpFunction(decl, text, depth, output);
 			break;
 		case DeclKind::Param:
-			output.append("(param ");
-			AppendSpan(decl->typeRef, text, output);
-			output.append(" ");
-			AppendSpan(decl->name, text, output);
-			output.append(")");
+			DumpParam(decl, text, output);
 			break;
 		}
 	}
