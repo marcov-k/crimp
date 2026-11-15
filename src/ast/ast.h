@@ -56,6 +56,7 @@ struct AstExpr
 	List<AstExpr*> args{};
 	const Type* type{ nullptr };
 	Symbol* symbol{ nullptr };
+	std::int64_t intValue{};
 };
 
 struct AstStmt

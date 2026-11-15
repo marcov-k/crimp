@@ -199,6 +199,11 @@ namespace
 		return symbol->type;
 	}
 
+	std::string LinkName(std::string_view name)
+	{
+		return name == "main" ? std::string{ name } : std::format("crimp.{}", name);
+	}
+
 	void DeclareFunction(CheckerState& state, AstDecl* decl)
 	{
 		const Type* returnType{ ResolveType(state, decl->typeRef, true) };
@@ -245,7 +250,7 @@ namespace
 		funcSymbol->nameId = funcId;
 		funcSymbol->returnType = returnType;
 		funcSymbol->paramTypes = { state.arena.CopyArray<const Type*>(localTypes), localTypes.size() };
-		funcSymbol->linkName = funcSymbol->name;
+		funcSymbol->linkName = CopyToArena(state.arena, LinkName(funcSymbol->name));
 		funcSymbol->declSpan = decl->name;
 		funcSymbol->declNode = decl;
 
@@ -307,6 +312,7 @@ namespace
 				break;
 			}
 		}
+		expr->intValue = acc;
 
 		return IntType();
 	}

@@ -6,6 +6,7 @@
 #include <memory>
 #include <new>
 #include <span>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -69,3 +70,5 @@ private:
 
 	void* Alloc(std::size_t size, std::size_t alignment);
 };
+
+std::string_view CopyToArena(Arena& arena, std::string_view text);

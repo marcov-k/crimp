@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string_view>
 
 namespace
 {
@@ -35,4 +36,9 @@ void* Arena::Alloc(std::size_t size, std::size_t alignment)
 	void* result{ reinterpret_cast<void*>(cursor) };
 	_cursor = reinterpret_cast<char*>(cursor + size);
 	return result;
+}
+
+std::string_view CopyToArena(Arena& arena, std::string_view text)
+{
+	return { arena.CopyArray<char>(std::span<const char>{ text.data(), text.size() }), text.size() };
 }

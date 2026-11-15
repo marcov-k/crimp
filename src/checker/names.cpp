@@ -21,7 +21,7 @@ NameId Names::Intern(std::string_view text)
 		return found->second;
 	}
 
-	std::string_view stored{ _arena.CopyArray<char>(std::span<const char>{ text.data(), text.size() }), text.size() };
+	std::string_view stored{ CopyToArena(_arena, text) };
 	NameId id{ _texts.size() };
 
 	_ids[stored] = id;

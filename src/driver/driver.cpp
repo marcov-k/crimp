@@ -4,12 +4,13 @@
 #include "../ast/ast_dump.h"
 #include "../ast/ast_dump_tests.h"
 #include "../checker/checker.h"
+#include "../checker/dump_symbols.h"
 #include "../common/arena.h"
 #include "../common/span.h"
 #include "../common/utils.h"
-#include "../compile_flags.h"
 #include "../diagnostics/diagnostics.h"
 #include "../diagnostics/source_map.h"
+#include "../emitter/emitter.h"
 #include "../lexer/lexer.h"
 #include "../parser/parser.h"
 #include "../platform/file_io.h"
@@ -17,6 +18,7 @@
 #include "../platform/startup.h"
 #include "../platform/utf8_wide.h"
 
+#include <cstddef>
 #include <cstdio>
 #include <cwchar>
 #include <filesystem>
@@ -27,6 +29,25 @@
 
 namespace
 {
+	struct CompileFlags
+	{
+		bool verbose{ false };
+		bool keepTemps{ false };
+		bool dumpTokens{ false };
+		bool dumpAst{ false };
+		bool dumpSymbols{ false };
+		bool emitSSA{ false };
+	};
+
+	void PrintNewDiagnostics(const SourceMap& sources, const Diagnostics& diag, std::size_t& printedCount)
+	{
+		for (; printedCount < diag.All().size(); ++printedCount)
+		{
+			std::string d{ Render(sources, diag.All()[printedCount]) };
+			std::fwrite(d.data(), 1, d.size(), stderr);
+		}
+	}
+
 	void DumpTokens(const SourceMap& source, FileId fileId, const std::vector<Token>& tokens)
 	{
 		const SourceFile& file{ source.File(fileId) };
@@ -50,6 +71,48 @@ namespace
 	std::filesystem::path GetExecutablePath(std::filesystem::path sourcePath)
 	{
 		return sourcePath.replace_extension(".exe");
+	}
+
+	bool EmitSSA(const std::string& ssa, std::filesystem::path sourcePath)
+	{
+		std::filesystem::path outPath{ sourcePath.replace_extension(".ssa") };
+
+		std::string err{};
+		if (!WriteFile(outPath, ssa, err))
+		{
+			std::fprintf(stderr, "%s\n", err.c_str());
+			return false;
+		}
+
+		std::fprintf(stderr, "emitted SSA at: %s\n", PathToUTF8(outPath).c_str());
+		return true;
+	}
+
+	bool FindTools(Tools& tools, bool verbose)
+	{
+		tools.qbe = ResolveTool(L"CRIMP_QBE", L"qbe");
+		if (tools.qbe.empty())
+		{
+			std::fprintf(stderr, "error: could not find QBE (set CRIMP_QBE or add it to PATH)\n");
+			return false;
+		}
+		if (verbose)
+		{
+			std::printf("using QBE found at: %s\n", PathToUTF8(tools.qbe).c_str());
+		}
+
+		tools.cc = ResolveTool(L"CRIMP_CC", L"gcc");
+		if (tools.cc.empty())
+		{
+			std::fprintf(stderr, "error: could not find GCC (set CRIMP_CC or add it to PATH)\n");
+			return false;
+		}
+		if (verbose)
+		{
+			std::printf("using GCC found at: %s\n", PathToUTF8(tools.cc).c_str());
+		}
+
+		return true;
 	}
 
 	bool BuildExecutable(const std::string& il, const std::filesystem::path& exePath,
@@ -113,7 +176,7 @@ namespace
 
 	int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
 	{
-		std::printf("\nCompiling Crimp source code...\n");
+		std::fprintf(stderr, "\nCompiling Crimp source code...\n");
 
 		std::string text, err;
 
@@ -124,6 +187,7 @@ namespace
 		}
 
 		Diagnostics diag;
+		std::size_t diagsPrinted{ 0 };
 
 		SourceMap sources;
 		FileId id{ sources.Add(PathToUTF8(sourcePath), std::move(text)) };
@@ -146,58 +210,39 @@ namespace
 			std::printf("----------------------\n");
 		}
 
-		for (const Diagnostic& d : diag.All())
-		{
-			std::string s{ Render(sources, d) };
-			std::fwrite(s.data(), 1, s.size(), stderr);
-		}
+		PrintNewDiagnostics(sources, diag, diagsPrinted);
 		if (diag.HasErrors()) return 1;
 
 		Analyze(program, sources, diag, arena);
-
-		for (const Diagnostic& d : diag.All())
+		if (flags.dumpSymbols)
 		{
-			std::string s{ Render(sources, d) };
-			std::fwrite(s.data(), 1, s.size(), stderr);
+			std::printf("\n-----Symbol Dump------\n\n");
+			DumpSymbols(program);
+			std::printf("----------------------\n");
 		}
+
+		PrintNewDiagnostics(sources, diag, diagsPrinted);
 		if (diag.HasErrors()) return 1;
 
-		// TODO: finish IL generation
-		std::printf("\ncode generation is not implemented yet\n");
-		return 0;
+		std::string ssa{ Emit(sources, program) };
+		if (flags.emitSSA)
+		{
+			if (!EmitSSA(ssa, sourcePath)) return 1;
+			return 0;
+		}
 
 		Tools tools;
-		tools.qbe = ResolveTool(L"CRIMP_QBE", L"qbe");
-		if (tools.qbe.empty())
-		{
-			std::fprintf(stderr, "error: could not find QBE (set CRIMP_QBE or add it to PATH)\n");
-			return 1;
-		}
-		if (flags.verbose)
-		{
-			std::printf("using QBE found at: %s\n", PathToUTF8(tools.qbe).c_str());
-		}
-
-		tools.cc = ResolveTool(L"CRIMP_CC", L"gcc");
-		if (tools.cc.empty())
-		{
-			std::fprintf(stderr, "error: could not find GCC (set CRIMP_CC or add it to PATH)\n");
-			return 1;
-		}
-		if (flags.verbose)
-		{
-			std::printf("using GCC found at: %s\n", PathToUTF8(tools.cc).c_str());
-		}
+		if (!FindTools(tools, flags.verbose)) return 1;
 
 		std::filesystem::path exePath{ GetExecutablePath(sourcePath) };
 
 		err.clear();
-		if (!BuildExecutable(sources.File(id).text, exePath, tools, flags.keepTemps, err))
+		if (!BuildExecutable(ssa, exePath, tools, flags.keepTemps, err))
 		{
 			std::fprintf(stderr, "%s\n", err.c_str());
 			return 1;
 		}
-		std::printf("\nbuilt %s\n", PathToUTF8(exePath).c_str());
+		std::fprintf(stderr, "\nbuilt %s\n", PathToUTF8(exePath).c_str());
 
 		return 0;
 	}
@@ -224,6 +269,8 @@ int wmain(int argc, wchar_t** argv)
 		else if (wcscmp(argv[i], L"--keep-temps") == 0) flags.keepTemps = true;
 		else if (wcscmp(argv[i], L"--dump-tokens") == 0) flags.dumpTokens = true;
 		else if (wcscmp(argv[i], L"--dump-ast") == 0) flags.dumpAst = true;
+		else if (wcscmp(argv[i], L"--dump-symbols") == 0) flags.dumpSymbols = true;
+		else if (wcscmp(argv[i], L"--emit-ssa") == 0) flags.emitSSA = true;
 		else { std::fprintf(stderr, "unknown option '%s'\n", WideToUTF8({ argv[i] }).c_str()); return 1; }
 	}
 
