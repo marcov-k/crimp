@@ -4,7 +4,7 @@
 #include "../ast/ast_dump.h"
 #include "../ast/ast_dump_tests.h"
 #include "../checker/checker.h"
-#include "../checker/dump_symbols.h"
+#include "../checker/symbols_dump.h"
 #include "../common/arena.h"
 #include "../common/span.h"
 #include "../common/utils.h"
@@ -84,7 +84,7 @@ namespace
 			return false;
 		}
 
-		std::fprintf(stderr, "emitted SSA at: %s\n", PathToUTF8(outPath).c_str());
+		std::fprintf(stderr, "\nemitted SSA at: %s\n", PathToUTF8(outPath).c_str());
 		return true;
 	}
 

@@ -1,4 +1,4 @@
-#include "dump_symbols.h"
+#include "symbols_dump.h"
 
 #include "symbols.h"
 #include "types.h"
