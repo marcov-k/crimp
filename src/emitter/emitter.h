@@ -5,4 +5,4 @@
 class SourceMap;
 struct AstProgram;
 
-std::string Emit(const SourceMap& source, const AstProgram* program);
+std::string EmitIL(const SourceMap& source, const AstProgram* program);

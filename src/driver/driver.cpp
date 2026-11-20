@@ -224,7 +224,7 @@ namespace
 		PrintNewDiagnostics(sources, diag, diagsPrinted);
 		if (diag.HasErrors()) return 1;
 
-		std::string ssa{ Emit(sources, program) };
+		std::string ssa{ EmitIL(sources, program) };
 		if (flags.emitSSA)
 		{
 			if (!EmitSSA(ssa, sourcePath)) return 1;
