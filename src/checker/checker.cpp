@@ -133,12 +133,7 @@ namespace
 
 	std::string_view SpanToStringView(const CheckerState& state, const Span& span)
 	{
-		std::string_view text{ state.source.File(state.fileId).text };
-
-		assert(span.begin <= span.end && span.end <= text.size());
-		if (span.begin > span.end || span.end > text.size()) return {};
-
-		return { text.substr(span.begin, span.end - span.begin) };
+		return SpanToStringView(state.source.File(state.fileId).text, span);
 	}
 
 	void Report(CheckerState& state, Span span, std::string_view message)

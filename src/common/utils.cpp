@@ -1,6 +1,9 @@
 #include "utils.h"
 
+#include "span.h"
+
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <string>
 #include <string_view>
@@ -57,4 +60,12 @@ std::string EscapeString(std::string_view s)
 	}
 
 	return out;
+}
+
+std::string_view SpanToStringView(std::string_view text, const Span& span)
+{
+	assert(span.begin <= span.end && span.end <= text.size());
+	if (span.begin > span.end || span.end > text.size()) return {};
+
+	return { text.substr(span.begin, span.end - span.begin) };
 }

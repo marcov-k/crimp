@@ -1,0 +1,25 @@
+data $crimp_str.0 = { b "%d\n", b 0 }
+
+export function w $crimp.add(w %p.a, w %p.b)
+{
+@start
+	%v.a.0 =l alloc4 4
+	%v.b.1 =l alloc4 4
+	storew %p.a, %v.a.0
+	storew %p.b, %v.b.1
+	%t.0 =w loadw %v.a.0
+	%t.1 =w loadw %v.b.1
+	%t.2 =w add %t.0, %t.1
+	ret %t.2
+}
+
+export function w $main()
+{
+@start
+	%v.r.0 =l alloc4 4
+	%t.0 =w call $crimp.add(w 2, w 3)
+	storew %t.0, %v.r.0
+	%t.1 =w loadw %v.r.0
+	call $printf(l $crimp_str.0, ..., w %t.1)
+	ret 0
+}

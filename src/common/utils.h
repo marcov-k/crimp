@@ -5,6 +5,8 @@
 #include <string>
 #include <string_view>
 
+struct Span;
+
 bool IsNullOrWhitespace(const std::string& s);
 
 inline bool IsWhitespace(char c)
@@ -28,3 +30,5 @@ inline bool IsAlphanumeric(char c)
 }
 
 std::string EscapeString(std::string_view s);
+
+std::string_view SpanToStringView(std::string_view text, const Span& span);
