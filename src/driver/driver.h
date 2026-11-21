@@ -3,11 +3,14 @@
 #include <filesystem>
 #include <string>
 
-struct Tools
+struct CompileFlags
 {
-	std::filesystem::path qbe;
-	std::filesystem::path cc;
-	std::wstring target{ L"amd64_win" };
+	bool verbose{ false };
+	bool keepTemps{ false };
+	bool dumpTokens{ false };
+	bool dumpAst{ false };
+	bool dumpSymbols{ false };
+	bool emitSSA{ false };
 };
 
-int wmain(int argc, wchar_t** argv);
+int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags);

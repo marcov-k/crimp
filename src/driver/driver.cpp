@@ -2,7 +2,6 @@
 
 #include "../ast/ast.h"
 #include "../ast/ast_dump.h"
-#include "../ast/ast_dump_tests.h"
 #include "../checker/checker.h"
 #include "../checker/symbols_dump.h"
 #include "../common/arena.h"
@@ -29,14 +28,11 @@
 
 namespace
 {
-	struct CompileFlags
+	struct Tools
 	{
-		bool verbose{ false };
-		bool keepTemps{ false };
-		bool dumpTokens{ false };
-		bool dumpAst{ false };
-		bool dumpSymbols{ false };
-		bool emitSSA{ false };
+		std::filesystem::path qbe;
+		std::filesystem::path cc;
+		std::wstring target{ L"amd64_win" };
 	};
 
 	void PrintNewDiagnostics(const SourceMap& sources, const Diagnostics& diag, std::size_t& printedCount)
@@ -173,108 +169,77 @@ namespace
 
 		return ok;
 	}
-
-	int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
-	{
-		std::fprintf(stderr, "\nCompiling Crimp source code...\n");
-
-		std::string text, err;
-
-		if (!ReadFile(sourcePath, text, err))
-		{
-			std::fprintf(stderr, "error: %s\n", err.c_str());
-			return 1;
-		}
-
-		Diagnostics diag;
-		std::size_t diagsPrinted{ 0 };
-
-		SourceMap sources;
-		FileId id{ sources.Add(PathToUTF8(sourcePath), std::move(text)) };
-
-		std::vector<Token> tokens{ Lex(sources, id, diag) };
-		if (flags.dumpTokens)
-		{
-			std::printf("\n------Token Dump------\n\n");
-			DumpTokens(sources, id, tokens);
-			std::printf("----------------------\n");
-		}
-
-		Arena arena{};
-
-		AstProgram* program{ Parse(id, tokens, diag, arena) };
-		if (flags.dumpAst)
-		{
-			std::printf("\n-------AST Dump-------\n\n");
-			DumpAst(sources, program);
-			std::printf("----------------------\n");
-		}
-
-		PrintNewDiagnostics(sources, diag, diagsPrinted);
-		if (diag.HasErrors()) return 1;
-
-		Analyze(program, sources, diag, arena);
-		if (flags.dumpSymbols)
-		{
-			std::printf("\n-----Symbol Dump------\n\n");
-			DumpSymbols(program);
-			std::printf("----------------------\n");
-		}
-
-		PrintNewDiagnostics(sources, diag, diagsPrinted);
-		if (diag.HasErrors()) return 1;
-
-		std::string ssa{ EmitIL(sources, program) };
-		if (flags.emitSSA)
-		{
-			if (!EmitSSA(ssa, sourcePath)) return 1;
-			return 0;
-		}
-
-		Tools tools;
-		if (!FindTools(tools, flags.verbose)) return 1;
-
-		std::filesystem::path exePath{ GetExecutablePath(sourcePath) };
-
-		err.clear();
-		if (!BuildExecutable(ssa, exePath, tools, flags.keepTemps, err))
-		{
-			std::fprintf(stderr, "%s\n", err.c_str());
-			return 1;
-		}
-		std::fprintf(stderr, "\nbuilt %s\n", PathToUTF8(exePath).c_str());
-
-		return 0;
-	}
 }
 
-int wmain(int argc, wchar_t** argv)
+int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
 {
-	Initialize();
+	std::fprintf(stderr, "\nCompiling Crimp source code...\n");
 
-	if (argc == 2 && wcscmp(argv[1], L"--test-ast") == 0) return RunAstDumpTests();
+	std::string text, err;
 
-	if (argc < 2)
+	if (!ReadFile(sourcePath, text, err))
 	{
-		std::fprintf(stderr, "missing source file\n");
+		std::fprintf(stderr, "error: %s\n", err.c_str());
 		return 1;
 	}
 
-	std::filesystem::path sourcePath{ argv[1] };
+	Diagnostics diag;
+	std::size_t diagsPrinted{ 0 };
 
-	CompileFlags flags{};
-	for (int i{ 2 }; i < argc; ++i)
+	SourceMap sources;
+	FileId id{ sources.Add(PathToUTF8(sourcePath), std::move(text)) };
+
+	std::vector<Token> tokens{ Lex(sources, id, diag) };
+	if (flags.dumpTokens)
 	{
-		if (wcscmp(argv[i], L"--verbose") == 0) flags.verbose = true;
-		else if (wcscmp(argv[i], L"--keep-temps") == 0) flags.keepTemps = true;
-		else if (wcscmp(argv[i], L"--dump-tokens") == 0) flags.dumpTokens = true;
-		else if (wcscmp(argv[i], L"--dump-ast") == 0) flags.dumpAst = true;
-		else if (wcscmp(argv[i], L"--dump-symbols") == 0) flags.dumpSymbols = true;
-		else if (wcscmp(argv[i], L"--emit-ssa") == 0) flags.emitSSA = true;
-		else { std::fprintf(stderr, "unknown option '%s'\n", WideToUTF8({ argv[i] }).c_str()); return 1; }
+		std::printf("\n------Token Dump------\n\n");
+		DumpTokens(sources, id, tokens);
+		std::printf("----------------------\n");
 	}
 
-	PrependToPath(L"C:\\msys64\\mingw64\\bin");
+	Arena arena{};
 
-	return Compile(sourcePath, flags);
+	AstProgram* program{ Parse(id, tokens, diag, arena) };
+	if (flags.dumpAst)
+	{
+		std::printf("\n-------AST Dump-------\n\n");
+		DumpAst(sources, program);
+		std::printf("----------------------\n");
+	}
+
+	PrintNewDiagnostics(sources, diag, diagsPrinted);
+	if (diag.HasErrors()) return 1;
+
+	Analyze(program, sources, diag, arena);
+	if (flags.dumpSymbols)
+	{
+		std::printf("\n-----Symbol Dump------\n\n");
+		DumpSymbols(program);
+		std::printf("----------------------\n");
+	}
+
+	PrintNewDiagnostics(sources, diag, diagsPrinted);
+	if (diag.HasErrors()) return 1;
+
+	std::string ssa{ EmitIL(sources, program) };
+	if (flags.emitSSA)
+	{
+		if (!EmitSSA(ssa, sourcePath)) return 1;
+		return 0;
+	}
+
+	Tools tools;
+	if (!FindTools(tools, flags.verbose)) return 1;
+
+	std::filesystem::path exePath{ GetExecutablePath(sourcePath) };
+
+	err.clear();
+	if (!BuildExecutable(ssa, exePath, tools, flags.keepTemps, err))
+	{
+		std::fprintf(stderr, "%s\n", err.c_str());
+		return 1;
+	}
+	std::fprintf(stderr, "\nbuilt %s\n", PathToUTF8(exePath).c_str());
+
+	return 0;
 }

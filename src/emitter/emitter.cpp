@@ -1,6 +1,6 @@
 #include "emitter.h"
 
-#include "il_writer.h"
+#include "../il_writer/il_writer.h"
 #include "../ast/ast.h"
 #include "../checker/symbols.h"
 #include "../checker/types.h"

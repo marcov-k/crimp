@@ -1,30 +1,40 @@
-﻿# CMakeList.txt : CMake project for crimp, include source and define
-# project specific logic here.
-#
-cmake_minimum_required (VERSION 3.15)
+﻿cmake_minimum_required(VERSION 3.15)
 
-# Enable Hot Reload for MSVC compilers if supported.
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
+enable_testing()
 
-project ("crimp")
+project("crimp" LANGUAGES CXX)
 
-# Add source to this project's executable.
-add_executable (crimp "src/main.cpp"  "src/platform/utf8_wide.h" "src/platform/utf8_wide.cpp" "src/platform/win_error.h" "src/platform/win_error.cpp" "src/platform/scoped_handle.h" "src/platform/scoped_handle.cpp" "src/platform/process.h" "src/platform/process.cpp" "src/platform/file_io.h" "src/platform/file_io.cpp" "src/driver/driver.h" "src/driver/driver.cpp" "src/lexer/lexer.h" "src/lexer/lexer.cpp"  "src/platform/startup.h" "src/platform/startup.cpp" "src/diagnostics/source_map.h" "src/diagnostics/source_map.cpp" "src/diagnostics/diagnostics.h" "src/diagnostics/diagnostics.cpp" "src/common/utils.h" "src/common/utils.cpp" "src/lexer/tokens.h" "src/lexer/tokens.cpp" "src/common/span.h" "src/parser/parser.h" "src/parser/parser.cpp" "src/ast/ast.h" "src/common/arena.h" "src/common/arena.cpp" "src/ast/ast_dump.cpp" "src/ast/ast_dump.h" "src/ast/ast_dump_tests.h" "src/ast/ast_dump_tests.cpp" "src/checker/checker.h" "src/checker/checker.cpp" "src/checker/types.h" "src/checker/symbols.h" "src/common/list.h" "src/checker/names.h" "src/checker/names.cpp" "src/checker/scopes.h" "src/checker/scopes.cpp" "src/emitter/il_writer.h" "src/emitter/il_writer.cpp" "src/emitter/emitter.h" "src/emitter/emitter.cpp" "src/checker/symbols_dump.h" "src/checker/symbols_dump.cpp")
+option(CRIMP_BUILD_TESTS "Build Test Suite" OFF)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_target_properties(crimp PROPERTIES
-	  CXX_STANDARD 20
-	  CXX_STANDARD_REQUIRED ON
-	  CXX_EXTENSIONS OFF
-  )
-endif()
+file(GLOB_RECURSE CRIMP_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
+list(REMOVE_ITEM CRIMP_SOURCES "src/main.cpp")
 
-target_compile_options(crimp PRIVATE
+# Core compiler library
+add_library(crimp_core STATIC ${CRIMP_SOURCES})
+target_include_directories(crimp_core PUBLIC src)
+target_compile_features(crimp_core PUBLIC cxx_std_20)
+set_target_properties(crimp_core PROPERTIES
+	CXX_STANDARD 20
+	CXX_STANDARD_REQUIRED ON
+	CXX_EXTENSIONS OFF
+)
+target_compile_options(crimp_core PRIVATE
 	"$<$<CXX_COMPILER_ID:MSVC>:/W4;/utf-8;/permissive->"
 	"$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-Wpedantic>"
 )
 
-# TODO: Add tests and install targets if needed.
+# Compiler executable
+add_executable(crimp src/main.cpp)
+target_link_libraries(crimp PRIVATE crimp_core)
+
+# Test executable
+if (CRIMP_BUILD_TESTS)
+	file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "tests/*.cpp")
+	add_executable(crimp_tests ${TEST_SOURCES})
+	target_link_libraries(crimp_tests PRIVATE crimp_core)
+	target_compile_definitions(crimp_tests PRIVATE
+		CRIMP_TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests/golden"
+	)
+endif()
+
+add_test(NAME crimp_all COMMAND crimp_tests)
