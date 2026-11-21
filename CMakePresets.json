@@ -1,5 +1,5 @@
 ﻿{
-    "version": 3,
+  "version": 3,
   "configurePresets": [
     {
       "name": "windows-base",
@@ -8,7 +8,6 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe"
       },
       "condition": {
@@ -33,15 +32,11 @@
     {
       "name": "x64-debug-tests",
       "displayName": "x64 Debug Test Suite",
-      "inherits": "windows-base",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
+      "inherits": "x64-debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "$env{VSINSTALLDIR}Common7/IDE/CommonExtensions/Microsoft/CMake/cmake/Microsoft/SegmentHeap.cmake",
-        "CRIMP_BUILD_TESTS": true
+        "CRIMP_BUILD_TESTS": true,
+        "CRIMP_ASAN": true,
+        "CRIMP_WARNINGS_AS_ERRORS": true
       }
     },
     {
@@ -49,8 +44,7 @@
       "displayName": "x64 Release",
       "inherits": "x64-debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "$env{VSINSTALLDIR}Common7/IDE/CommonExtensions/Microsoft/CMake/cmake/Microsoft/SegmentHeap.cmake"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -60,8 +54,21 @@
       "configurePreset": "x64-debug"
     },
     {
+      "name": "x64-debug-tests",
+      "configurePreset": "x64-debug-tests"
+    },
+    {
       "name": "x64-release",
       "configurePreset": "x64-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "x64-debug-tests",
+      "configurePreset": "x64-debug-tests",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
