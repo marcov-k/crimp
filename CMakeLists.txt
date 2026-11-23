@@ -12,7 +12,7 @@ list(FILTER CRIMP_SOURCES EXCLUDE REGEX "/src/main\\.cpp$")
 
 function (crimp_warnings target)
 	target_compile_options(${target} PRIVATE
-		"$<$<CXX_COMPILER_ID:MSVC>:/W4;/utf-8;/permissive->"
+		"$<$<CXX_COMPILER_ID:MSVC>:/W4;/utf-8;/permissive-;/Zc:preprocessor>"
 		"$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-Wpedantic>"
 	)
 	if(CRIMP_WARNINGS_AS_ERRORS)
@@ -73,6 +73,7 @@ if (CRIMP_BUILD_TESTS)
 	target_compile_definitions(crimp_tests PRIVATE
 		CRIMP_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/golden"
 	)
+	target_include_directories(crimp_tests PRIVATE tests)
 	crimp_warnings(crimp_tests)
 	crimp_sanitizers(crimp_tests)
 	crimp_asan(crimp_tests)
