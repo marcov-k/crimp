@@ -2,10 +2,13 @@
 
 #include "context.h"
 #include "registry.h"
+#include "string_contains.h"
 #include "text_diff.h"
 #include "to_text.h"
 
+#include <format>
 #include <string>
+#include <string_view>
 
 #define TEST(suite, name) \
 	static void Test_##suite##_##name(); \
@@ -49,6 +52,28 @@
 		if (!CheckTextsEqual((expected), (actual), crimp_msg_)) \
 		{ \
 			ReportFailure(__FILE__, __LINE__, crimp_msg_); \
+		} \
+	} while (0)
+
+#define CHECK_CONTAINS(haystack, needle) \
+	do \
+	{ \
+		std::string_view crimp_haystack_ = (haystack); \
+		std::string_view crimp_needle_ = (needle); \
+		if (!StringContains(crimp_haystack_, crimp_needle_)) \
+		{ \
+			ReportFailure(__FILE__, __LINE__, std::format("'{}' not found in {}: '{}'", crimp_needle_, #haystack, crimp_haystack_)); \
+		} \
+	} while (0)
+
+#define CHECK_NOT_CONTAINS(haystack, needle) \
+	do \
+	{ \
+		std::string_view crimp_haystack_ = (haystack); \
+		std::string_view crimp_needle_ = (needle); \
+		if (StringContains(crimp_haystack_, crimp_needle_)) \
+		{ \
+			ReportFailure(__FILE__, __LINE__, std::format("'{}' found in {}: '{}'", crimp_needle_, #haystack, crimp_haystack_)); \
 		} \
 	} while (0)
 

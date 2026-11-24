@@ -45,13 +45,14 @@ namespace
 			}
 			else line.push_back(chara);
 		}
-		lines.push_back(line);
+		if (!line.empty()) lines.push_back(line);
 
 		return lines;
 	}
 
 	NewlineDiff DifferOnlyByFinalNewline(const std::string& expected, const std::string& actual)
 	{
+		// Size checks guard .back() calls
 		if (expected.size() == actual.size() + 1 && expected.back() == '\n' && expected == actual + "\n") return NewlineDiff::Expected;
 		if (actual.size() == expected.size() + 1 && actual.back() == '\n' && actual == expected + "\n") return NewlineDiff::Actual;
 		return NewlineDiff::None;
