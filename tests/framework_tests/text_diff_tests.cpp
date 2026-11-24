@@ -428,7 +428,6 @@ TEST(text_diff, null_byte_in_expected_and_actual)
 
 TEST(text_diff, null_byte_in_expected_and_actual_and_mismatch)
 {
-    using namespace std::literals;
     std::string message{};
 
     std::string expected("a\0b", 3);
