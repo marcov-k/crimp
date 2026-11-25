@@ -1,0 +1,25 @@
+name: Crimp Test Suite
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  run-tests:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake --preset x64-debug-tests
+
+      - name: Build Crimp
+        run: cmake --build --preset x64-debug-tests
+
+      - name: Run CTest
+        run: |
+          BUILD_DIR=$(find . -name "crimp_tests" -type f -exec dirname {} \; | head -n 1)
+          cd "$BUILD_DIR"
+          ctest
+        
