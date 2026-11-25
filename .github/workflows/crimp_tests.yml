@@ -48,9 +48,24 @@ jobs:
 
           [xml]$results = Get-Content "${{ github.workspace }}/test-results.xml"
 
-          $total = [int]$results.testsuites.tests
-          $failed = [int]$results.testsuites.failures + [int]$results.testsuites.errors
-          $skipped = [int]$results.testsuites.skipped
+          $testCases = @($results.SelectNodes("//testcase"))
+
+          $total = $testCases.Count
+          $failed = 0
+          $skipped = 0
+
+          foreach ($test in $testCases)
+          {
+            if ($test.SelectNodes("./failure | ./error").Count -gt 0)
+            {
+              $failed++
+            }
+            elseif ($test.SelectNodes("./skipped").Count -gt 0)
+            {
+              $skipped++
+            }
+          }
+          
           $passed = $total - $failed - $skipped
 
           $badge = "![Tests](https://img.shields.io/badge/Tests-$passed%20passed%2C%20$failed%20failed-brightgreen)"
