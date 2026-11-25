@@ -23,8 +23,15 @@ jobs:
         run: cmake --build --preset x64-debug-tests
 
       - name: Run CTest
+        shell: pwsh
         run: |
-          BUILD_DIR=$(find . -name "crimp_tests" -type f -exec dirname {} \; | head -n 1)
-          cd "$BUILD_DIR"
+          $BUILD_FILE = Get-ChildItem -Path . -Filter "crimp_tests.exe" -Recurse -File | Select-Object -First 1
+
+          if ($null -eq $BUILD_FILE)
+          {
+            throw "Could not find crimp_tests.exe"
+          }
+
+          cd $BUILD_FILE.DirectoryName
+
           ctest
-        
