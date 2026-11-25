@@ -117,7 +117,7 @@ if (CRIMP_BUILD_TESTS)
 
 		add_test(NAME crimp_selftest_heap_overflow COMMAND crimp_tests --filter selftest/heap_overflow)
 		set_tests_properties(crimp_selftest_heap_overflow PROPERTIES
-			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: access-violation on unknown address]]
+			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: heap-buffer-overflow on address]]
 			TIMEOUT 30
 		)
 	endif()

@@ -32,6 +32,6 @@ TEST(selftest, null_dereference)
 
 TEST(selftest, heap_overflow)
 {
-	std::vector<int> vec{};
-	vec.data()[1] = 1;
+	std::vector<int> vec{4};
+	vec.data()[4] = 1;
 }

@@ -41,7 +41,7 @@ namespace
 		DWORD code{ exceptionInfo->ExceptionRecord->ExceptionCode };
 		if (const CurrentTest* test = GetCurrentTest())
 		{
-			std::fprintf(stderr, "Unhandled exception 0x%081X in test %s\n", code, test->name.c_str());
+			std::fprintf(stderr, "Unhandled exception 0x%08lX in test %s\n", code, test->name.c_str());
 		}
 		else
 		{
