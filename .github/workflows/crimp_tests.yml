@@ -40,13 +40,13 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          if (-not (Test-Path "test-results.xml"))
+          if (-not (Test-Path "${{ github.workspace }}/test-results.xml"))
           {
             Write-Host "No test results available"
             exit 0
           }
 
-          [xml]$results = Get-Content "test-results.xml"
+          [xml]$results = Get-Content "${{ github.workspace }}/test-results.xml"
 
           $total = [int]$results.testsuites.tests
           $failed = [int]$results.testsuites.failures + [int]$results.testsuites.errors
@@ -58,6 +58,8 @@ jobs:
           $readme = Get-Content README.md -Raw
 
           $readme = $readme -replace '(?s)(<!-- TEST_RESULTS_START -->).*?(<!-- TEST_RESULTS_END -->)', "`$1`n$badge`n`$2"
+
+          Set-Content README.md $readme
 
       - name: Commit updated test results
         if: always() && github.event_name != 'pull_request'
