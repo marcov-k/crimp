@@ -32,3 +32,26 @@ jobs:
           name: test-results
           path: test-results.xml
           if-no-files-found: warn
+
+      - name: Update test results badge
+        if: always()
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "test-results.xml"))
+          {
+            Write-Host "No test results available"
+            exit 0
+          }
+
+          [xml]$results = Get-Content "test-results.xml"
+
+          $total = [int]$results.testsuites.tests
+          $failed = [int]$results.testsuites.failures + [int]$results.testsuites.errors
+          $skipped = [int]$results.testsuites.skipped
+          $passed = $total - $failed - $skipped
+
+          $badge = "![Tests](https://img.shields.io/badge/Tests-$passed%20passed%2C%20$failed%20failed-brightgreen)"
+
+          $readme = Get-Content README.md -Raw
+
+          $readme = $readme -replace '(?s)(<!-- TEST_RESULTS_START -->).*?(<!-- TEST_RESULTS_END -->)', "`$1`n$badge`n`$2"
