@@ -86,7 +86,7 @@ if (CRIMP_BUILD_TESTS)
 	# Selftests
 	add_test(NAME crimp_selftest_failing_check COMMAND crimp_tests --filter selftest/failing_check)
 	set_tests_properties(crimp_selftest_failing_check PROPERTIES
-		PASS_REGULAR_EXPRESSION [[: false]]
+		PASS_REGULAR_EXPRESSION [[1 failed(.|\n)*selftest/failing_check: Failed]]
 		TIMEOUT 30
 	)
 
