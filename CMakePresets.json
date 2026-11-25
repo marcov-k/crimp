@@ -30,12 +30,22 @@
       }
     },
     {
+      "name": "x64-debug-tests-asan",
+      "displayName": "x64 Debug Test Suite with ASAN",
+      "inherits": "x64-debug",
+      "cacheVariables": {
+        "CRIMP_BUILD_TESTS": true,
+        "CRIMP_ASAN": true,
+        "CRIMP_WARNINGS_AS_ERRORS": true
+      }
+    },
+    {
       "name": "x64-debug-tests",
       "displayName": "x64 Debug Test Suite",
       "inherits": "x64-debug",
       "cacheVariables": {
         "CRIMP_BUILD_TESTS": true,
-        "CRIMP_ASAN": true,
+        "CRIMP_ASAN": false,
         "CRIMP_WARNINGS_AS_ERRORS": true
       }
     },
@@ -54,6 +64,10 @@
       "configurePreset": "x64-debug"
     },
     {
+      "name": "x64-debug-tests-asan",
+      "configurePreset": "x64-debug-tests-asan"
+    },
+    {
       "name": "x64-debug-tests",
       "configurePreset": "x64-debug-tests"
     },
@@ -63,6 +77,14 @@
     }
   ],
   "testPresets": [
+    {
+      "name": "x64-debug-tests-asan",
+      "configurePreset": "x64-debug-tests-asan",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
     {
       "name": "x64-debug-tests",
       "configurePreset": "x64-debug-tests",

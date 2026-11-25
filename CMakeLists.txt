@@ -109,15 +109,45 @@ if (CRIMP_BUILD_TESTS)
 	)
 
 	if (CRIMP_ASAN)
-		add_test(NAME crimp_selftest_null_dereference COMMAND crimp_tests --test selftest/null_dereference)
-		set_tests_properties(crimp_selftest_null_dereference PROPERTIES
+		add_test(NAME crimp_selftest_null_dereference_asan COMMAND crimp_tests --test selftest/null_dereference)
+		set_tests_properties(crimp_selftest_null_dereference_asan PROPERTIES
 			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: access-violation on unknown address]]
 			TIMEOUT 30
 		)
 
-		add_test(NAME crimp_selftest_heap_overflow COMMAND crimp_tests --test selftest/heap_overflow)
-		set_tests_properties(crimp_selftest_heap_overflow PROPERTIES
+		add_test(NAME crimp_selftest_heap_overflow_asan COMMAND crimp_tests --test selftest/heap_overflow)
+		set_tests_properties(crimp_selftest_heap_overflow_asan PROPERTIES
 			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: heap-buffer-overflow on address]]
+			TIMEOUT 30
+		)
+
+		add_test(NAME crimp_selftest_division_by_zero_asan COMMAND crimp_tests --test selftest/division_by_zero)
+		set_tests_properties(crimp_selftest_division_by_zero_asan PROPERTIES
+			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: int-divide-by-zero on unknown address]]
+			TIMEOUT 30
+		)
+
+		add_test(NAME crimp_selftest_stack_overflow_asan COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/stack_overflow)
+		set_tests_properties(crimp_selftest_stack_overflow_asan PROPERTIES
+			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: stack-overflow on address]]
+			TIMEOUT 30
+		)
+	else ()
+		add_test(NAME crimp_selftest_null_dereference COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/null_dereference)
+		set_tests_properties(crimp_selftest_null_dereference PROPERTIES
+			PASS_REGULAR_EXPRESSION [[Unhandled exception 0xC0000005 in test selftest/]]
+			TIMEOUT 30
+		)
+
+		add_test(NAME crimp_selftest_division_by_zero COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/division_by_zero)
+		set_tests_properties(crimp_selftest_division_by_zero PROPERTIES
+			PASS_REGULAR_EXPRESSION [[Unhandled exception 0xC0000094 in test selftest/]]
+			TIMEOUT 30
+		)
+
+		add_test(NAME crimp_selftest_stack_overflow COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/stack_overflow)
+		set_tests_properties(crimp_selftest_stack_overflow PROPERTIES
+			PASS_REGULAR_EXPRESSION [[Unhandled exception 0xC00000FD in test selftest/]]
 			TIMEOUT 30
 		)
 	endif()
