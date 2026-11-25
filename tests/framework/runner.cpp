@@ -1,6 +1,7 @@
 #include "runner.h"
 
 #include "context.h"
+#include "error_codes.h"
 #include "registry.h"
 
 #include <algorithm>
@@ -115,7 +116,7 @@ int RunTests(const RunnerOptions& options)
 		{
 			std::fprintf(stderr, "no tests match '%s'\n", options.filter.c_str());
 		}
-		return 1;
+		return CRIMP_TEST_USAGE_ERROR;
 	}
 
 	std::sort(tests.begin(), tests.end(),
@@ -131,7 +132,7 @@ int RunTests(const RunnerOptions& options)
 			std::printf("%s\n", test.name.c_str());
 		}
 
-		return 0;
+		return CRIMP_TEST_SUCCESS;
 	}
 
 	std::vector<TestResult> results{};
@@ -163,5 +164,5 @@ int RunTests(const RunnerOptions& options)
 	std::printf("%zu succeeded, %zu skipped, %zu failed\n", successes, skips, fails);
 	std::printf("%s", failsLog.c_str());
 
-	return fails == 0 ? 0 : 1;
+	return fails == 0 ? CRIMP_TEST_SUCCESS : CRIMP_TEST_FAILED;
 }

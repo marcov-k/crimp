@@ -1,4 +1,5 @@
 ﻿#include "driver/driver.h"
+#include "platform/error_codes.h"
 #include "platform/file_io.h"
 #include "platform/process.h"
 #include "platform/startup.h"
@@ -15,7 +16,7 @@ int wmain(int argc, wchar_t** argv)
 	if (argc < 2)
 	{
 		std::fprintf(stderr, "missing source file\n");
-		return 1;
+		return CRIMP_USAGE_ERROR;
 	}
 
 	std::filesystem::path sourcePath{ argv[1] };
@@ -29,7 +30,7 @@ int wmain(int argc, wchar_t** argv)
 		else if (std::wcscmp(argv[i], L"--dump-ast") == 0) flags.dumpAst = true;
 		else if (std::wcscmp(argv[i], L"--dump-symbols") == 0) flags.dumpSymbols = true;
 		else if (std::wcscmp(argv[i], L"--emit-ssa") == 0) flags.emitSSA = true;
-		else { std::fprintf(stderr, "unknown option '%s'\n", WideToUTF8({ argv[i] }).c_str()); return 1; }
+		else { std::fprintf(stderr, "unknown option '%s'\n", WideToUTF8({ argv[i] }).c_str()); return CRIMP_USAGE_ERROR; }
 	}
 
 	PrependToPath(L"C:\\msys64\\mingw64\\bin");

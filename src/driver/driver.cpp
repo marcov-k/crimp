@@ -12,6 +12,7 @@
 #include "../emitter/emitter.h"
 #include "../lexer/lexer.h"
 #include "../parser/parser.h"
+#include "../platform/error_codes.h"
 #include "../platform/file_io.h"
 #include "../platform/process.h"
 #include "../platform/startup.h"
@@ -180,7 +181,7 @@ int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
 	if (!ReadFile(sourcePath, text, err))
 	{
 		std::fprintf(stderr, "error: %s\n", err.c_str());
-		return 1;
+		return CRIMP_COMPILER_ERROR;
 	}
 
 	Diagnostics diag;
@@ -208,7 +209,7 @@ int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
 	}
 
 	PrintNewDiagnostics(sources, diag, diagsPrinted);
-	if (diag.HasErrors()) return 1;
+	if (diag.HasErrors()) return CRIMP_COMPILER_ERROR;
 
 	Analyze(program, sources, diag, arena);
 	if (flags.dumpSymbols)
@@ -219,17 +220,17 @@ int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
 	}
 
 	PrintNewDiagnostics(sources, diag, diagsPrinted);
-	if (diag.HasErrors()) return 1;
+	if (diag.HasErrors()) return CRIMP_COMPILER_ERROR;
 
 	std::string ssa{ EmitIL(sources, program) };
 	if (flags.emitSSA)
 	{
-		if (!EmitSSA(ssa, sourcePath)) return 1;
-		return 0;
+		if (!EmitSSA(ssa, sourcePath)) return CRIMP_COMPILER_ERROR;
+		return CRIMP_SUCCESS;
 	}
 
 	Tools tools;
-	if (!FindTools(tools, flags.verbose)) return 1;
+	if (!FindTools(tools, flags.verbose)) return CRIMP_COMPILER_ERROR;
 
 	std::filesystem::path exePath{ GetExecutablePath(sourcePath) };
 
@@ -237,9 +238,9 @@ int Compile(const std::filesystem::path& sourcePath, const CompileFlags& flags)
 	if (!BuildExecutable(ssa, exePath, tools, flags.keepTemps, err))
 	{
 		std::fprintf(stderr, "%s\n", err.c_str());
-		return 1;
+		return CRIMP_COMPILER_ERROR;
 	}
 	std::fprintf(stderr, "\nbuilt %s\n", PathToUTF8(exePath).c_str());
 
-	return 0;
+	return CRIMP_SUCCESS;
 }

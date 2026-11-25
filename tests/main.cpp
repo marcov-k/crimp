@@ -1,3 +1,5 @@
+#include "framework/crt_setup.h"
+#include "framework/error_codes.h"
 #include "framework/runner.h"
 
 #include <cstdio>
@@ -13,6 +15,8 @@ namespace
 
 int main(int argc, char** argv)
 {
+	SetUpCRT();
+
 	RunnerOptions options{};
 
 	for (int i{ 1 }; i < argc; ++i)
@@ -23,13 +27,13 @@ int main(int argc, char** argv)
 			if (i + 1 >= argc)
 			{
 				PrintUsage();
-				return 1;
+				return CRIMP_TEST_USAGE_ERROR;
 			}
 
 			options.filter = argv[++i];
 		}
 		else if (std::strcmp(argv[i], "--verbose") == 0) options.verbose = true;
-		else { PrintUsage(); return 1; }
+		else { PrintUsage(); return CRIMP_TEST_USAGE_ERROR; }
 	}
 
 	return RunTests(options);

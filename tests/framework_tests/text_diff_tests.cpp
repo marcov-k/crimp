@@ -2,6 +2,7 @@
 
 #include "../framework/test.h"
 
+#include <cstddef>
 #include <string>
 
 // Line-number and missing-line behavior
@@ -473,4 +474,66 @@ TEST(text_diff, final_newline_in_empty_expected_and_empty_actual)
     CHECK(!CheckTextsEqual("\n", "", message));
 
     CHECK_EQ(message, "\n\t\texpected ends with a newline, actual doesn't");
+}
+
+TEST(text_diff, ten_thousand_lines_matching)
+{
+    std::string message{};
+
+    const char* line{ "a\n" };
+    std::string lines{};
+    lines.reserve(20'000);
+    for (std::size_t i{ 0 }; i < 10'000; ++i)
+    {
+        lines += line;
+    }
+
+    CHECK(CheckTextsEqual(lines, lines, message));
+
+    CHECK(message.empty());
+}
+
+TEST(text_diff, ten_thousand_lines_last_line_mismatch)
+{
+    std::string message{};
+
+    const char* line{ "a\n" };
+    std::string expected{}, actual{};
+    expected.reserve(20'000);
+    actual.reserve(20'000);
+
+    for (std::size_t i{ 0 }; i < 9'999; ++i)
+    {
+        expected += line;
+        actual += line;
+    }
+    expected += line;
+    actual += "b\n";
+
+    CHECK(!CheckTextsEqual(expected, actual, message));
+
+    CHECK_EQ(message, "\n\t\tline 10000: expected |a| actual |b|");
+}
+
+TEST(text_diff, one_hundred_thousand_characters_last_mismatch)
+{
+    std::string message{};
+
+    constexpr char chara{ 'a' };
+    std::string expected{}, actual{};
+    expected.reserve(100'000);
+    actual.reserve(100'000);
+
+    for (std::size_t i{ 0 }; i < 99'999; ++i)
+    {
+        expected += chara;
+        actual += chara;
+    }
+    expected += chara;
+    actual += "b";
+
+    CHECK(!CheckTextsEqual(expected, actual, message));
+
+    CHECK(message.starts_with("\n\t\tline 1: expected |"));
+    CHECK(message.ends_with("b|"));
 }
