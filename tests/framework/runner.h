@@ -6,6 +6,7 @@ struct RunnerOptions
 {
 	bool list{ false };
 	std::string filter{};
+	std::string test{};
 	bool verbose{ false };
 };
 

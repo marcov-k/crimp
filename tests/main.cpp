@@ -9,7 +9,7 @@ namespace
 {
 	void PrintUsage()
 	{
-		std::fprintf(stderr, "usage: crimp_tests [--list] [--filter <text>] [--verbose]\n");
+		std::fprintf(stderr, "usage: crimp_tests [--list] [--filter <text>] [--test <name>] [--verbose]\n");
 	}
 }
 
@@ -31,6 +31,16 @@ int main(int argc, char** argv)
 			}
 
 			options.filter = argv[++i];
+		}
+		else if (std::strcmp(argv[i], "--test") == 0)
+		{
+			if (i + 1 >= argc)
+			{
+				PrintUsage();
+				return CRIMP_TEST_USAGE_ERROR;
+			}
+
+			options.test = argv[++i];
 		}
 		else if (std::strcmp(argv[i], "--verbose") == 0) options.verbose = true;
 		else { PrintUsage(); return CRIMP_TEST_USAGE_ERROR; }

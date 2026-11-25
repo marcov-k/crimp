@@ -61,6 +61,16 @@ namespace
 		return filtered;
 	}
 
+	std::vector<TestEntry> FindTest(const std::vector<TestEntry>& tests, std::string_view name)
+	{
+		for (const TestEntry& test : tests)
+		{
+			if (test.name == name) return { test };
+		}
+
+		return {};
+	}
+
 	TestResult RunTest(const TestEntry& test)
 	{
 		std::printf("[ RUN  ] %s\n", test.name.c_str());
@@ -104,17 +114,21 @@ namespace
 
 int RunTests(const RunnerOptions& options)
 {
-	std::vector<TestEntry> tests{ FilterTests(Registry(), options.filter) };
+	std::vector<TestEntry> tests{ !options.test.empty() ? FindTest(Registry(), options.test) : FilterTests(Registry(), options.filter) };
 
 	if (tests.empty())
 	{
-		if (options.filter.empty())
+		if (!options.test.empty())
 		{
-			std::fprintf(stderr, "no tests found in registry\n");
+			std::fprintf(stderr, "no test found with name '%s'\n", options.test.c_str());
+		}
+		else if (!options.filter.empty())
+		{
+			std::fprintf(stderr, "no tests match '%s'\n", options.filter.c_str());
 		}
 		else
 		{
-			std::fprintf(stderr, "no tests match '%s'\n", options.filter.c_str());
+			std::fprintf(stderr, "no tests found in registry\n");
 		}
 		return CRIMP_TEST_USAGE_ERROR;
 	}
