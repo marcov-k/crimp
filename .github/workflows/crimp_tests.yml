@@ -26,7 +26,7 @@ jobs:
         run: cmake --build --preset x64-debug-tests
 
       - name: Run CTest
-        run: ctest --preset x64-debug-tests --output-junit test-results.xml --parallel
+        run: ctest --preset x64-debug-tests --output-junit "${{ github.workspace }}/test-results.xml" --parallel
 
       - name: Upload test results
         if: always()
