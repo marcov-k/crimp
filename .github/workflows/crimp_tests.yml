@@ -25,8 +25,23 @@ jobs:
       - name: Build Crimp
         run: cmake --build --preset x64-debug-tests
 
+      - name: Verify tests registered with CTest
+        shell: pwsh
+        run: |
+          $exe = "${{ github.workspace }}/out/build/x64-debug-tests/crimp_tests.exe"
+          $listed = @(& $exe --list | Where-Object { $_ }).Count
+          $line = ctest --preset x64-debug-tests -N -E "^crimp_selftest_" | Select-String "Total Tests: (\d+)"
+          $registered = [int]$line.Matches[0].Groups[1].Value
+          
+          Write-Host "crimp_tests --list: $listed, ctest: $registered"
+          if ($listed -ne $registered)
+          {
+            Write-Error "ctest registered $registered tests but crimp_tests lists $listed"
+            exit 1
+          }
+
       - name: Run CTest
-        run: ctest --preset x64-debug-tests --output-junit "${{ github.workspace }}/test-results.xml" --parallel
+        run: ctest --preset x64-debug-tests --parallel --output-junit "${{ github.workspace }}/test-results.xml"
 
       - name: Upload test results
         if: always()
@@ -36,45 +51,106 @@ jobs:
           path: test-results.xml
           if-no-files-found: warn
 
-      - name: Update test results badge
+      - name: Generate test report and update README
         if: always()
         shell: pwsh
         run: |
-          if (-not (Test-Path "${{ github.workspace }}/test-results.xml"))
+          $xmlPath = "${{ github.workspace }}/test-results.xml"
+          if (-not (Test-Path $xmlPath))
           {
             Write-Host "No test results available"
             exit 0
           }
 
-          [xml]$results = Get-Content "${{ github.workspace }}/test-results.xml"
+          $inv = [cultureinfo]::InvariantCulture
+          [xml]$results = Get-Content $xmlPath
+          $cases = @($results.SelectNodes("//testcase"))
 
-          $testCases = @($results.SelectNodes("//testcase"))
-
-          $total = $testCases.Count
-          $failed = 0
-          $skipped = 0
-
-          foreach ($test in $testCases)
+          $records = foreach ($tc in $cases)
           {
-            if ($test.SelectNodes("./failure | ./error").Count -gt 0)
-            {
-              $failed++
-            }
-            elseif ($test.SelectNodes("./skipped").Count -gt 0)
-            {
-              $skipped++
+            $name = $tc.name
+            if ($name -match '^([^/]+)/(.+)$') { $suite = $Matches[1]; $short = $Matches[2] }
+            elseif ($name -match '^crimp_selftest_(.+)$') { $suite = 'selftest'; $short = $Matches[1] }
+            else { $suite = 'other'; $short = $name }
+
+            $status = 'passed'
+            if ($tc.SelectNodes("./failure | ./error").Count -gt 0) { $status = 'failed' }
+            elseif ($tc.SelectNodes("./skipped").Count -gt 0) { $status = 'skipped' }
+
+            $out = ''
+            $outNode = $tc.SelectSingleNodes("./system-out")
+            if ($outNode) { $out = $outNode.InnerText.Trim() }
+
+            [pscustomobject]@{
+              Suite = $suite
+              Name = $short
+              Full = $name
+              Status = $status
+              Time = [double]::Parse($tc.time, $inv)
+              Output = $out
             }
           }
-          
+
+          $total = @($records).Count
+          $failed = @($records | Where-Object { $_.Status -eq 'failed' }).Count
+          $skipped = @($records | Where-Object { $_.Status -eq 'skipped' }).Count
           $passed = $total - $failed - $skipped
 
-          $badge = "![Tests](https://img.shields.io/badge/Tests-$passed%20passed%2C%20$failed%20failed-brightgreen)"
+          # Per-test report
+          $md = New-Object System.Collections.Generic.List[string]
+          $md.Add("# Test Results")
+          $md.Add("")
+          $md.Add("**$passed passed, $failed failed, $skipped skipped** ($total total)")
+          $md.Add("")
 
+          if ($failed -gt 0)
+          {
+            $md.Add("## Failures")
+            $md.Add("")
+            foreach ($r in ($records | Where-Object { $_.Status -eq 'failed' }))
+            {
+              $test = $r.Output
+              if ($text.Length -gt 1500) { $text = $text.Substring(0, 1500) + "`n... (truncated)" }
+              $md.Add("### ``$($r.Full)``")
+              $md.Add("")
+              $md.Add('```')
+              $md.Add($text)
+              $md.Add('```')
+              $md.Add("")
+            }
+          }
+
+          $md.Add("## All tests")
+          $md.Add("")
+          foreach ($group in ($records | Group-Object Suite | Sort-Object Name))
+          {
+            $gFailed = @($group.Group | Where-Object { $_.Status -eq 'failed' }).Count
+            $gSkipped = @($group.Group | Where-Object { $_.Status -eq 'skipped' }).Count
+            $gPassed = $group.Count - $gFailed - $gSkipped
+            $open = if ($gFailed -gt 0) { " open" } else { "" }
+            $md.Add("<details$open><summary><b>$($group.Name)</b>: $gPassed passed, $gFailed failed, $gSkipped skipped</summary>")
+            $md.Add("")
+            $md.Add("| Test | Result | Time |")
+            $md.Add("|---|---|---|")
+            foreach ($r in ($group.Group | Sort-Object Name))
+            {
+              $icon = switch ($r.Status) { 'passed' { 'passed' } 'failed' { 'FAILED' } default { 'skipped' } }
+              $md.Add("| ``$($r.Name)`` | $icon | $($r.Time.ToString('0.000', $inv))s |")
+            }
+            $md.Add("")
+            $md.Add("</details>")
+            $md.Add("")
+          }
+
+          New-Item -ItemType Directory -Force -Path "docs" | Out-Null
+          Set-Content -Path "docs/TEST_RESULTS.md" -Value ($md -join "`n") -Encoding utf8
+
+          # README badge
+          $color = if ($failed -gt 0) { 'red' } else { 'brightgreen' }
+          $badge = "[![Tests](https://img.shields.io/badge/Tests-$passed%20passed%2C%20$failed%20failed-$color)](docs/TEST_RESULTS.md)"
           $readme = Get-Content README.md -Raw
-
-          $readme = $readme -replace '(?s)(<!-- TEST_RESULTS_START -->).*?(<!-- TEST_RESULTS_END -->)', "`$1`n$badge`n`$2"
-
-          Set-Content README.md $readme
+          $readme = $readme -replace '(?s)(<!-- TEST_RESULTS_START -->).*?(<-- TEST_RESULTS_END -->)', "`$1`n$badge`n`$2"
+          Set-Content -Path README.md -Value $readme -Encoding utf8 -NoNewline
 
       - name: Commit updated test results
         if: always() && github.event_name != 'pull_request'
@@ -83,10 +159,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add README.md
+          git add README.md docs/TEST_RESULTS.md
 
           if (-not (git diff --cached --quiet))
           {
-            git commit -m "Update test results badge"
+            git commit -m "Update test results"
             git push
           }
