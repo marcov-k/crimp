@@ -78,7 +78,7 @@ jobs:
             elseif ($tc.SelectNodes("./skipped").Count -gt 0) { $status = 'skipped' }
 
             $out = ''
-            $outNode = $tc.SelectSingleNodes("./system-out")
+            $outNode = $tc.SelectSingleNode("./system-out")
             if ($outNode) { $out = $outNode.InnerText.Trim() }
 
             [pscustomobject]@{
