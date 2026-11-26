@@ -2,12 +2,12 @@
 
 #include "watchdog.h"
 
-#include <string>
+#include <string_view>
 
 class WatchdogGuard
 {
 public:
-	WatchdogGuard(Watchdog& watchdog, std::string testName) : _watchdog(watchdog)
+	WatchdogGuard(Watchdog& watchdog, std::string_view testName) : _watchdog(watchdog)
 	{
 		_watchdog.Begin(testName);
 	}

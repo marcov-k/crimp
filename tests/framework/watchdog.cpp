@@ -13,19 +13,24 @@
 #include <windows.h>
 
 #include <chrono>
+#include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <mutex>
-#include <string>
+#include <string_view>
 #include <thread>
 
 Watchdog::Watchdog(std::chrono::steady_clock::duration timeLimit)
 	: _timeLimit(timeLimit)
 {
-	_thread = std::jthread{ std::bind_front(&Watchdog::WatchdogLoop, this) };
+	if (_timeLimit > std::chrono::steady_clock::duration::zero())
+	{
+		_thread = std::jthread{ [this](std::stop_token stop) { WatchdogLoop(stop); } };
+	}
 }
 
-void Watchdog::Begin(std::string testName)
+void Watchdog::Begin(std::string_view testName)
 {
 	if (_timeLimit == std::chrono::steady_clock::duration::zero())
 	{
@@ -37,6 +42,7 @@ void Watchdog::Begin(std::string testName)
 		_state.testName = testName;
 		_state.startTime = std::chrono::steady_clock::now();
 		_state.running = true;
+		++_state.testCounter;
 	}
 }
 
@@ -60,6 +66,7 @@ void Watchdog::WatchdogLoop(std::stop_token stop)
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		std::string name;
+		std::size_t testCounter;
 		{
 			std::lock_guard lock{ _stateMutex };
 			if (!_state.running) continue;
@@ -68,18 +75,22 @@ void Watchdog::WatchdogLoop(std::stop_token stop)
 			if (elapsed < _timeLimit) continue;
 
 			name = _state.testName;
+			testCounter = _state.testCounter;
 		}
 		
 		if (IsDebuggerPresent())
 		{
 			{
 				std::lock_guard lock{ _stateMutex };
-				_state.startTime = std::chrono::steady_clock::now();
+				if (_state.testCounter == testCounter)
+				{
+					_state.startTime = std::chrono::steady_clock::now();
+				}
 			}
 			continue;
 		}
 
-		std::fprintf(stderr, "TIMEOUT: %s exceeded %lfs\n", name.c_str(), std::chrono::duration_cast<std::chrono::duration<double>>(_timeLimit).count());
+		std::fprintf(stderr, "TIMEOUT: %s exceeded %gs\n", name.c_str(), std::chrono::duration_cast<std::chrono::duration<double>>(_timeLimit).count());
 		_exit(CRIMP_TEST_TIMEOUT);
 	}
 }

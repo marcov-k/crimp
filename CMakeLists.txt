@@ -109,14 +109,14 @@ if (CRIMP_BUILD_TESTS)
 
 	add_test(NAME crimp_selftest_hang_busy COMMAND crimp_tests --test selftest/hang_busy --timeout 1)
 	set_tests_properties(crimp_selftest_hang_busy PROPERTIES
-		PASS_REGULAR_EXPRESSION [[TIMEOUT: selftest/hang_busy exceeded 1.000000s]]
+		PASS_REGULAR_EXPRESSION [[TIMEOUT: selftest/hang_busy exceeded 1s]]
 		TIMEOUT 30
 		LABELS "selftest"
 	)
 
 	add_test(NAME crimp_selftest_hang_blocked COMMAND crimp_tests --test selftest/hang_blocked --timeout 1)
 	set_tests_properties(crimp_selftest_hang_blocked PROPERTIES
-		PASS_REGULAR_EXPRESSION [[TIMEOUT: selftest/hang_blocked exceeded 1.000000s]]
+		PASS_REGULAR_EXPRESSION [[TIMEOUT: selftest/hang_blocked exceeded 1s]]
 		TIMEOUT 30
 		LABELS "selftest"
 	)

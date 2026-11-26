@@ -56,11 +56,17 @@ int main(int argc, char** argv)
 
 			try
 			{
-				options.timeout = std::stod(argv[++i]);
+				double timeout{ std::stod(argv[++i]) };
+				if (timeout < 0.0)
+				{
+					std::fprintf(stderr, "--timeout argument must be positive\n");
+					return CRIMP_TEST_USAGE_ERROR;
+				}
+				options.timeout = timeout;
 			}
 			catch (const std::exception&)
 			{
-				std::fprintf(stderr, "--timeout argument must be a number");
+				std::fprintf(stderr, "--timeout argument must be a number\n");
 				return CRIMP_TEST_USAGE_ERROR;
 			}
 		}
