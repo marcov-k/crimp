@@ -8,6 +8,8 @@ struct RunnerOptions
 	std::string filter{};
 	std::string test{};
 	bool verbose{ false };
+	double timeout{ 10.0 }; // in seconds
+	bool noTimeout{ false }; // overrides timeout
 };
 
 int RunTests(const RunnerOptions& options);

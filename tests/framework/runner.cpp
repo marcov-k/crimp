@@ -3,8 +3,11 @@
 #include "context.h"
 #include "error_codes.h"
 #include "registry.h"
+#include "watchdog.h"
+#include "watchdog_guard.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -149,9 +152,12 @@ int RunTests(const RunnerOptions& options)
 		return CRIMP_TEST_SUCCESS;
 	}
 
+	Watchdog watchdog{ std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>{ options.timeout }) };
+
 	std::vector<TestResult> results{};
 	for (const TestEntry& test : tests)
 	{
+		WatchdogGuard guard{ watchdog, test.name };
 		results.push_back(RunTest(test));
 	}
 

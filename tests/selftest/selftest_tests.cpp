@@ -1,7 +1,10 @@
 #include "../framework/test.h"
 
 #include <cassert>
+#include <chrono>
 #include <cstdio>
+#include <future>
+#include <thread>
 #include <vector>
 
 namespace
@@ -14,6 +17,8 @@ namespace
 		else return 0;
 	}
 }
+
+// Checks, asserts, and exceptions
 
 TEST(selftest, failing_check)
 {
@@ -43,7 +48,7 @@ TEST(selftest, null_dereference)
 
 TEST(selftest, heap_overflow)
 {
-	std::vector<int> vec{4};
+	std::vector<int> vec(4);
 	vec.data()[4] = 1;
 }
 
@@ -56,4 +61,32 @@ TEST(selftest, division_by_zero)
 TEST(selftest, stack_overflow)
 {
 	Recurse(true);
+}
+
+// Watchdog
+
+TEST(selftest, hang_busy)
+{
+	volatile bool flag{ true };
+
+	while (flag)
+	{
+		[[maybe_unused]] int x{ 1 };
+	}
+}
+
+TEST(selftest, hang_blocked)
+{
+	std::promise<void> p;
+	p.get_future().wait();
+}
+
+TEST(selftest, slow_but_ok)
+{
+	std::this_thread::sleep_for(std::chrono::duration<double>{ 1.5 });
+}
+
+TEST(selftest, no_timeout_flag)
+{
+	std::this_thread::sleep_for(std::chrono::duration<double>{ 1.5 });
 }

@@ -107,6 +107,34 @@ if (CRIMP_BUILD_TESTS)
 		LABELS "selftest"
 	)
 
+	add_test(NAME crimp_selftest_hang_busy COMMAND crimp_tests --test selftest/hang_busy --timeout 1)
+	set_tests_properties(crimp_selftest_hang_busy PROPERTIES
+		PASS_REGULAR_EXPRESSION [[TIMEOUT: selftest/hang_busy exceeded 1.000000s]]
+		TIMEOUT 30
+		LABELS "selftest"
+	)
+
+	add_test(NAME crimp_selftest_hang_blocked COMMAND crimp_tests --test selftest/hang_blocked --timeout 1)
+	set_tests_properties(crimp_selftest_hang_blocked PROPERTIES
+		PASS_REGULAR_EXPRESSION [[TIMEOUT: selftest/hang_blocked exceeded 1.000000s]]
+		TIMEOUT 30
+		LABELS "selftest"
+	)
+
+	add_test(NAME crimp_selftest_slow_but_ok COMMAND crimp_tests --test selftest/slow_but_ok --timeout 5)
+	set_tests_properties(crimp_selftest_slow_but_ok PROPERTIES
+		PASS_REGULAR_EXPRESSION [[1 succeeded]]
+		TIMEOUT 30
+		LABELS "selftest"
+	)
+
+	add_test(NAME crimp_selftest_no_timeout_flag COMMAND crimp_tests --test selftest/no_timeout_flag --timeout 1 --no-timeout)
+	set_tests_properties(crimp_selftest_no_timeout_flag PROPERTIES
+		PASS_REGULAR_EXPRESSION [[1 succeeded]]
+		TIMEOUT 30
+		LABELS "selftest"
+	)
+
 	if (CRIMP_ASAN)
 		add_test(NAME crimp_selftest_null_dereference_asan COMMAND crimp_tests --test selftest/null_dereference)
 		set_tests_properties(crimp_selftest_null_dereference_asan PROPERTIES

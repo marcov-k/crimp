@@ -1,1 +1,36 @@
 #pragma once
+
+#include <chrono>
+#include <mutex>
+#include <string>
+#include <thread>
+
+struct TestState
+{
+	std::string testName{};
+	std::chrono::time_point<std::chrono::steady_clock> startTime{};
+	bool running{ false };
+};
+
+class Watchdog
+{
+public:
+	Watchdog(std::chrono::steady_clock::duration timeLimit);
+
+	Watchdog(const Watchdog&) = delete;
+	Watchdog& operator=(const Watchdog&) = delete;
+	Watchdog(Watchdog&&) = delete;
+	Watchdog& operator=(Watchdog&&) = delete;
+
+	void Begin(std::string testName);
+	void End();
+
+private:
+	TestState _state{};
+	std::mutex _stateMutex{};
+	std::chrono::steady_clock::duration _timeLimit;
+	std::jthread _thread;
+	
+
+	void WatchdogLoop(std::stop_token stop);
+};

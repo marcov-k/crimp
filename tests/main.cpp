@@ -4,12 +4,13 @@
 
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 namespace
 {
 	void PrintUsage()
 	{
-		std::fprintf(stderr, "usage: crimp_tests [--list] [--filter <text>] [--test <name>] [--verbose]\n");
+		std::fprintf(stderr, "usage: crimp_tests [--list] [--filter <text>] [--test <name>] [--verbose] [--timeout <seconds>]\n");
 	}
 }
 
@@ -43,6 +44,31 @@ int main(int argc, char** argv)
 			options.test = argv[++i];
 		}
 		else if (std::strcmp(argv[i], "--verbose") == 0) options.verbose = true;
+		else if (std::strcmp(argv[i], "--timeout") == 0)
+		{
+			if (i + 1 >= argc)
+			{
+				PrintUsage();
+				return CRIMP_TEST_USAGE_ERROR;
+			}
+
+			if (options.noTimeout) continue;
+
+			try
+			{
+				options.timeout = std::stod(argv[++i]);
+			}
+			catch (const std::exception&)
+			{
+				std::fprintf(stderr, "--timeout argument must be a number");
+				return CRIMP_TEST_USAGE_ERROR;
+			}
+		}
+		else if (std::strcmp(argv[i], "--no-timeout") == 0)
+		{
+			options.timeout = 0.0;
+			options.noTimeout = true;
+		}
 		else { PrintUsage(); return CRIMP_TEST_USAGE_ERROR; }
 	}
 
