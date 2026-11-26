@@ -4,7 +4,7 @@ Crimp is currently very early in development - this README will be updated as th
 ## Test Results
 
 <!-- TEST_RESULTS_START -->
-![Tests](https://img.shields.io/badge/Tests-7%20passed%2C%200%20failed-brightgreen)
+[![Tests](https://img.shields.io/badge/Tests-58%20passed%2C%200%20failed-brightgreen)](docs/TEST_RESULTS.md)
 <!-- TEST_RESULTS_END -->
 
 
