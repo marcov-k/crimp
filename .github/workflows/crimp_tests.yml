@@ -149,7 +149,7 @@ jobs:
           $color = if ($failed -gt 0) { 'red' } else { 'brightgreen' }
           $badge = "[![Tests](https://img.shields.io/badge/Tests-$passed%20passed%2C%20$failed%20failed-$color)](docs/TEST_RESULTS.md)"
           $readme = Get-Content README.md -Raw
-          $readme = $readme -replace '(?s)(<!-- TEST_RESULTS_START -->).*?(<-- TEST_RESULTS_END -->)', "`$1`n$badge`n`$2"
+          $readme = $readme -replace '(?s)(<!-- TEST_RESULTS_START -->).*?(<!-- TEST_RESULTS_END -->)', "`$1`n$badge`n`$2"
           Set-Content -Path README.md -Value $readme -Encoding utf8 -NoNewline
 
       - name: Commit updated test results
