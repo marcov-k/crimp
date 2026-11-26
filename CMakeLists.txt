@@ -78,34 +78,33 @@ if (CRIMP_BUILD_TESTS)
 	crimp_sanitizers(crimp_tests)
 	crimp_asan(crimp_tests)
 
-	add_test(NAME crimp_all COMMAND crimp_tests)
-	set_tests_properties(crimp_all PROPERTIES
-		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-	)
-
 	# Selftests
 	add_test(NAME crimp_selftest_failing_check COMMAND crimp_tests --test selftest/failing_check)
 	set_tests_properties(crimp_selftest_failing_check PROPERTIES
 		PASS_REGULAR_EXPRESSION [[1 failed(.|\n)*selftest/failing_check: Failed]]
 		TIMEOUT 30
+		LABELS "selftest"
 	)
 
 	add_test(NAME crimp_selftest_failing_assert COMMAND crimp_tests --test selftest/failing_assert)
 	set_tests_properties(crimp_selftest_failing_assert PROPERTIES
 		PASS_REGULAR_EXPRESSION [[Assertion failed: false]]
 		TIMEOUT 30
+		LABELS "selftest"
 	)
 
 	add_test(NAME crimp_selftest_invalid_parameter COMMAND crimp_tests --test selftest/invalid_parameter)
 	set_tests_properties(crimp_selftest_invalid_parameter PROPERTIES
 		PASS_REGULAR_EXPRESSION [[Invalid parameter in expression ']]
 		TIMEOUT 30
+		LABELS "selftest"
 	)
 
 	add_test(NAME crimp_selftest_abort_call COMMAND crimp_tests --test selftest/abort_call)
 	set_tests_properties(crimp_selftest_abort_call PROPERTIES
 		PASS_REGULAR_EXPRESSION [[abort\(\) has been called]]
 		TIMEOUT 30
+		LABELS "selftest"
 	)
 
 	if (CRIMP_ASAN)
@@ -113,42 +112,69 @@ if (CRIMP_BUILD_TESTS)
 		set_tests_properties(crimp_selftest_null_dereference_asan PROPERTIES
 			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: access-violation on unknown address]]
 			TIMEOUT 30
+			LABELS "selftest"
 		)
 
 		add_test(NAME crimp_selftest_heap_overflow_asan COMMAND crimp_tests --test selftest/heap_overflow)
 		set_tests_properties(crimp_selftest_heap_overflow_asan PROPERTIES
 			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: heap-buffer-overflow on address]]
 			TIMEOUT 30
+			LABELS "selftest"
 		)
 
 		add_test(NAME crimp_selftest_division_by_zero_asan COMMAND crimp_tests --test selftest/division_by_zero)
 		set_tests_properties(crimp_selftest_division_by_zero_asan PROPERTIES
 			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: int-divide-by-zero on unknown address]]
 			TIMEOUT 30
+			LABELS "selftest"
 		)
 
 		add_test(NAME crimp_selftest_stack_overflow_asan COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/stack_overflow)
 		set_tests_properties(crimp_selftest_stack_overflow_asan PROPERTIES
 			PASS_REGULAR_EXPRESSION [[ERROR: AddressSanitizer: stack-overflow on address]]
 			TIMEOUT 30
+			LABELS "selftest"
 		)
 	else ()
 		add_test(NAME crimp_selftest_null_dereference COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/null_dereference)
 		set_tests_properties(crimp_selftest_null_dereference PROPERTIES
 			PASS_REGULAR_EXPRESSION [[Unhandled exception 0xC0000005 in test selftest/]]
 			TIMEOUT 30
+			LABELS "selftest"
 		)
 
 		add_test(NAME crimp_selftest_division_by_zero COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/division_by_zero)
 		set_tests_properties(crimp_selftest_division_by_zero PROPERTIES
 			PASS_REGULAR_EXPRESSION [[Unhandled exception 0xC0000094 in test selftest/]]
 			TIMEOUT 30
+			LABELS "selftest"
 		)
 
 		add_test(NAME crimp_selftest_stack_overflow COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:crimp_tests> --test selftest/stack_overflow)
 		set_tests_properties(crimp_selftest_stack_overflow PROPERTIES
 			PASS_REGULAR_EXPRESSION [[Unhandled exception 0xC00000FD in test selftest/]]
 			TIMEOUT 30
+			LABELS "selftest"
 		)
 	endif()
+
+	set(CRIMP_DISCOVERED_TESTS
+		"${CMAKE_CURRENT_BINARY_DIR}/discovered_tests.cmake"
+	)
+
+	file(TOUCH "${CRIMP_DISCOVERED_TESTS}")
+
+	add_custom_command(TARGET crimp_tests POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+			"-DTEST_EXE=$<TARGET_FILE:crimp_tests>"
+			"-DOUT_FILE=${CRIMP_DISCOVERED_TESTS}"
+			"-DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+			-P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DiscoverTests.cmake"
+		VERBATIM
+		BYPRODUCTS "${CRIMP_DISCOVERED_TESTS}"
+	)
+
+	set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES
+		"${CRIMP_DISCOVERED_TESTS}"
+	)
 endif()
