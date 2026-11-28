@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace
@@ -124,12 +125,22 @@ const std::vector<Diagnostic>& Diagnostics::All() const
 	return _list;
 }
 
-std::string Render(const SourceMap& sm, const Diagnostic& d)
+std::string Render(const SourceMap& source, const Diagnostic& d)
 {
-	std::string out{ RenderOne(sm, d.span, Label(d.severity), d.message) };
+	std::string out{ RenderOne(source, d.span, Label(d.severity), d.message) };
 	for (const Note& n : d.notes)
 	{
-		out += RenderOne(sm, n.span, "note", n.message);
+		out.append(RenderOne(source, n.span, "note", n.message));
 	}
 	return out;
+}
+
+std::string RenderAllDiagnostics(const SourceMap& source, const Diagnostics& diag, std::size_t index)
+{
+	std::string output{};
+	for (; index < diag.All().size(); ++index)
+	{
+		output.append(Render(source, diag.All()[index]));
+	}
+	return output;
 }

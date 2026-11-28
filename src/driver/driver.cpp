@@ -11,6 +11,7 @@
 #include "../diagnostics/source_map.h"
 #include "../emitter/emitter.h"
 #include "../lexer/lexer.h"
+#include "../lexer/tokens_dump.h"
 #include "../parser/parser.h"
 #include "../platform/error_codes.h"
 #include "../platform/file_io.h"
@@ -38,24 +39,9 @@ namespace
 
 	void PrintNewDiagnostics(const SourceMap& sources, const Diagnostics& diag, std::size_t& printedCount)
 	{
-		for (; printedCount < diag.All().size(); ++printedCount)
-		{
-			std::string d{ Render(sources, diag.All()[printedCount]) };
-			std::fwrite(d.data(), 1, d.size(), stderr);
-		}
-	}
-
-	void DumpTokens(const SourceMap& source, FileId fileId, const std::vector<Token>& tokens)
-	{
-		const SourceFile& file{ source.File(fileId) };
-		std::string_view text{ file.text };
-
-		for (const Token& token : tokens)
-		{
-			LineCol lc{ source.Locate(fileId, token.span.begin) };
-			std::string_view lexeme{ text.substr(token.span.begin, token.span.end - token.span.begin) };
-			std::printf("%zu:%zu %s \"%s\"\n", lc.line, lc.col, GetTokenName(token.type).data(), EscapeString(lexeme).c_str());
-		}
+		std::string log{ RenderAllDiagnostics(sources, diag, printedCount) };
+		std::fwrite(log.data(), 1, log.size(), stderr);
+		printedCount = diag.All().size();
 	}
 
 	std::string ReadLog(const std::filesystem::path& p)

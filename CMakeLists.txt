@@ -70,8 +70,10 @@ if (CRIMP_BUILD_TESTS)
 	file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "tests/*.cpp")
 	add_executable(crimp_tests ${TEST_SOURCES})
 	target_link_libraries(crimp_tests PRIVATE crimp_core)
+	add_dependencies(crimp_tests crimp)
 	target_compile_definitions(crimp_tests PRIVATE
 		CRIMP_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/golden"
+		CRIMP_EXE="$<TARGET_FILE:crimp>"
 	)
 	target_include_directories(crimp_tests PRIVATE tests)
 	crimp_warnings(crimp_tests)

@@ -10,7 +10,7 @@ namespace
 {
 	void PrintUsage()
 	{
-		std::fprintf(stderr, "usage: crimp_tests [--list] [--filter <text>] [--test <name>] [--verbose] [--timeout <seconds>]\n");
+		std::fprintf(stderr, "usage: crimp_tests [--list] [--filter <text>] [--test <name>] [--verbose] [--timeout <seconds>] [--no-timeout]\n");
 	}
 }
 

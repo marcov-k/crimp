@@ -1,6 +1,7 @@
 #pragma once
 
 #include "source_map.h"
+#include "../common/span.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -13,8 +14,6 @@ enum class Severity : std::uint8_t
 	Warning,
 	Note
 };
-
-struct Span;
 
 struct Note
 {
@@ -53,4 +52,6 @@ private:
 	std::size_t _maxErrors;
 };
 
-std::string Render(const SourceMap& sm, const Diagnostic& d);
+std::string Render(const SourceMap& source, const Diagnostic& d);
+
+std::string RenderAllDiagnostics(const SourceMap& source, const Diagnostics& diag, std::size_t index = 0);
